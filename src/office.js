@@ -97,7 +97,6 @@ export function createOffice({ renderer, container, notify, chime }) {
 
   const root = document.createElement('div'); root.className = 'office-ui'; root.hidden = true;
   root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary" data-office="start">Clock in <span>↗</span></button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
-  container.appendChild(root);
   const $ = name => root.querySelector(`[data-office="${name}"]`);
   const keys = new Set(); let active = false, started = false, paused = false, lastTouch = null;
   const canvas = renderer.domElement;
@@ -152,7 +151,7 @@ export function createOffice({ renderer, container, notify, chime }) {
   return {
     update,
     resize(width, height) { camera.aspect = width / height; camera.updateProjectionMatrix(); },
-    activate() { active = true; root.hidden = false; if (started && !game.complete) setPaused(true); },
-    deactivate() { active = false; root.hidden = true; keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },
+    activate() { active = true; root.hidden = false; container.replaceChildren(root); if (started && !game.complete) setPaused(true); },
+    deactivate() { active = false; root.hidden = true; root.remove(); keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },
   };
 }

@@ -11,6 +11,7 @@ document.querySelector('#app').innerHTML = `
   <main>
       <section class="arena" aria-label="3D hive game">
         <div id="world"></div>
+        <div id="game-ui" class="mode-ui"><div id="garden-ui" class="garden-ui">
         <div class="arena-top garden-only">
           <div class="world-title"><span class="live-dot"></span> GARDEN_01<small>ROUND <span id="round">01</span></small></div>
           <div class="mission-status"><div><span>HIVE</span><strong id="honey">0</strong><span>/ 300</span><span id="percent">0%</span></div><div class="progress-track"><i id="honey-progress"></i></div></div>
@@ -18,10 +19,11 @@ document.querySelector('#app').innerHTML = `
           <div class="arena-actions"><button id="sound" title="Toggle sound" aria-label="Enable sound" aria-pressed="false">♪ <span>Sound off</span></button><button id="pause" title="Pause game" aria-label="Pause game" disabled>Ⅱ</button></div>
         </div>
         <div class="scene-label garden-only">HIVE<span>nectar drop-off</span></div>
-        <div id="toast" class="toast" role="status" aria-live="polite"></div>
         <div class="intro garden-only" id="intro"><div><h1>Collect. Return. Repeat.</h1><p>300 nectar. 3 minutes. You + 6 AI scouts.</p></div><button id="start" class="primary">Start flight <span>↗</span></button></div>
         <div class="flight-hud garden-only" id="flight-hud" hidden><div><span>YOUR NECTAR</span><div id="bag" class="bag"></div></div><div class="boost"><span id="boost-label">BOOST READY</span><div><i id="boost-meter"></i></div></div><button id="home" title="Point to hive">⌂ <span>Return to hive</span></button></div>
         <div class="mobile-controls garden-only" id="touch-controls"><div class="dpad"><button data-key="KeyW" aria-label="Fly forward">↑</button><button data-key="KeyA" aria-label="Fly left">←</button><button data-key="KeyS" aria-label="Fly backward">↓</button><button data-key="KeyD" aria-label="Fly right">→</button></div><div><button data-key="Space" aria-label="Fly up">↥</button><button data-key="ControlLeft" aria-label="Fly down">↧</button><button data-key="ShiftLeft">Boost</button></div></div>
+        </div></div>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
       </section>
     <section id="controls" class="controls" aria-label="Game controls"><span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> move</span><span><kbd>SPACE</kbd> / <kbd>CTRL</kbd> altitude</span><span><kbd>SHIFT</kbd> boost</span><span><kbd>P</kbd> pause</span></section>
   </main>
@@ -67,7 +69,7 @@ try {
   renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
   $('world').appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'A floating hexagonal garden with a golden hive, flowers, and flying bees');
-  renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); if (started && !paused) togglePause(); toast('Graphics paused. Refresh to restore the garden.'); });
+  renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); if (mode === 'garden' && started && !paused) togglePause(); toast('Graphics paused. Refresh to restore the game.'); });
 } catch { $('intro').innerHTML = '<div><h2>Your garden needs WebGL 2.</h2><p>Try a browser with hardware acceleration enabled.</p></div>'; }
 scene.add(new THREE.HemisphereLight('#d9f4da', '#223e30', 2.4));
 const sun = new THREE.DirectionalLight('#fff0c5', 3.2); sun.position.set(-12, 30, 15); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -25, right: 25, top: 25, bottom: -25, far: 70 }); sun.shadow.bias = -0.001; scene.add(sun);
@@ -197,20 +199,21 @@ function animate() {
   renderer.render(scene, camera);
   uiTime += dt; if (uiTime > 0.12) { updateUI(); uiTime = 0; }
 }
-if (renderer) office = createOffice({ renderer, container: document.querySelector('.arena'), notify: toast, chime });
+const gardenUI = $('garden-ui');
+if (renderer) office = createOffice({ renderer, container: $('game-ui'), notify: toast, chime });
 const gardenControls = $('controls').innerHTML;
 function switchMode(next) {
   if (next === mode) return;
   if (!office) { showModal('<h2>WebGL 2 required.</h2><p>Enable hardware acceleration to play.</p>'); return; }
   keys.clear(); modal.close(); $('toast').classList.remove('visible');
-  mode = next; document.querySelector('.arena').classList.toggle('office-mode', next === 'office');
+  mode = next;
   document.querySelector('.arena').setAttribute('aria-label', next === 'office' ? 'Worker Bee Sim first-person office game' : '3D hive game');
   $('garden-tab').setAttribute('aria-pressed', next === 'garden'); $('office-tab').setAttribute('aria-pressed', next === 'office');
   renderer.domElement.setAttribute('aria-label', next === 'office' ? 'A bee office with desks, stickman bee coworkers, and task stations' : 'A floating garden with bees and a golden hive');
   if (next === 'office') {
     office.activate();
     $('controls').innerHTML = '<span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> walk</span><span><kbd>MOUSE</kbd> / drag to look</span><span><kbd>SHIFT</kbd> sprint</span><span><kbd>E</kbd> hold to work</span><span><kbd>ESC</kbd> / <kbd>P</kbd> pause</span>';
-  } else { office.deactivate(); $('controls').innerHTML = gardenControls; }
+  } else { office.deactivate(); $('game-ui').replaceChildren(gardenUI); $('controls').innerHTML = gardenControls; }
   resize();
 }
 $('garden-tab').onclick = () => switchMode('garden');

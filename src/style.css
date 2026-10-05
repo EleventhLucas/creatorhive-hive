@@ -125,11 +125,12 @@ dialog p { font-size: 11px; line-height: 1.9; color: var(--muted); }
   .dpad button:nth-child(2) { grid-column: 1; }
   .mobile-controls > div:last-child { display: flex; gap: 5px; align-items: end; }
   .mobile-controls button[data-key="ShiftLeft"] { width: 52px; font-size: 10px; }
-  .arena:has(.intro:not([hidden])) .mobile-controls { display: none; }
+  .garden-ui:has(.intro:not([hidden])) .mobile-controls { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-.office-mode .garden-only { display: none !important; }
+.mode-ui, .garden-ui { position: absolute; inset: 0; pointer-events: none; }
+.garden-ui button { pointer-events: auto; }
 .office-ui { position: absolute; inset: 0; pointer-events: none; }
 .office-ui button { pointer-events: auto; }
 .office-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 24px; padding: 18px 20px; background: linear-gradient(#0b1510f2, #0b1510bf, #0b151000); }

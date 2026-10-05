@@ -13,7 +13,7 @@ npm run dev
 
 Open **http://127.0.0.1:5173**. Click **Start flight** to begin. The landing screen previews the AI garden.
 
-The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Hive** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating.
+The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Hive** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating and its UI is removed from the page until you return.
 
 ## Worker Bee Sim
 
@@ -65,4 +65,4 @@ The game uses Three.js and needs WebGL 2 / hardware acceleration. Its entry scre
 
 ## Layout
 
-`src/game.js` contains the garden simulation and rules, `src/main.js` contains garden artwork and mode navigation, `src/office-game.js` contains office movement and tasks, `src/office.js` contains the first-person office and controls, and `src/style.css` contains the responsive layout. Tests verify garden gameplay, office collision, movement, task progression, and shift resets.
+`src/game.js` contains the garden simulation and rules, `src/main.js` contains garden artwork and mode navigation, `src/office-game.js` contains office movement and tasks, `src/office.js` contains the first-person office and controls, and `src/style.css` contains the responsive layout. Tests verify garden gameplay, office collision, movement, task progression, shift resets, and mode UI isolation using a local DOM simulation.

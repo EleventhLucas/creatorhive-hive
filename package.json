@@ -9,7 +9,14 @@
     "start": "vite preview --host 127.0.0.1",
     "test": "node --test"
   },
-  "dependencies": { "three": "^0.180.0" },
-  "devDependencies": { "vite": "^7.1.9" },
-  "engines": { "node": ">=22.12" }
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.14.5",
+    "vite": "^7.1.9"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
 }
