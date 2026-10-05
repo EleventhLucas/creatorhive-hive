@@ -13,7 +13,19 @@ npm run dev
 
 Open **http://127.0.0.1:5173**. Click **Start flight** to begin. The landing screen previews the AI garden.
 
-The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Expand **Flight crew** to see scores.
+The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Hive** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating.
+
+## Worker Bee Sim
+
+A first-person office game with stickman bee coworkers, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **Clock in**. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Active stations have glowing floor rings and a distance indicator. After completing a shift, click **Next shift** to start again.
+
+- **WASD / arrows**: walk; **Shift**: sprint.
+- **Mouse**: look around. Clicking Clock in captures the mouse; **Esc** releases it and pauses. Dragging the game is also supported when mouse capture is unavailable.
+- **Hold E** near the highlighted station for 1.5 seconds to complete its task.
+- **P** or the pause button: pause/resume. Resume captures the mouse again.
+- Touch devices: drag the game to look, use the direction buttons to walk, and hold **Work** at a station.
+
+Furniture and walls block movement. Switching modes releases the mouse, and returning to an active office shift shows a Resume button. Both games remain entirely local, without saved progress or multiplayer.
 
 ### Launch from VS Code
 
@@ -53,4 +65,4 @@ The game uses Three.js and needs WebGL 2 / hardware acceleration. Its entry scre
 
 ## Layout
 
-`src/game.js` contains the simulation and rules, `src/main.js` contains procedural 3D artwork and interface behavior, and `src/style.css` contains the responsive layout. `test/game.test.js` verifies collection/delivery, movement limits, boost cooldowns, round transitions, AI contribution, and generated aliases.
+`src/game.js` contains the garden simulation and rules, `src/main.js` contains garden artwork and mode navigation, `src/office-game.js` contains office movement and tasks, `src/office.js` contains the first-person office and controls, and `src/style.css` contains the responsive layout. Tests verify garden gameplay, office collision, movement, task progression, and shift resets.

@@ -1,41 +1,41 @@
 import * as THREE from 'three';
 import { Game, RULES, FLOWERS } from './game.js';
+import { createOffice } from './office.js';
 import './style.css';
 
 const hexIcon = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 2 12 7v14l-12 7-12-7V9Z" stroke="currentColor" stroke-width="2"/><path d="M11 10h10v3H11zm-2 6h14v3H9zm2 6h10v3H11Z" fill="currentColor"/></svg>';
 document.querySelector('#app').innerHTML = `
-  <header class="masthead"><a class="brand" href="/">${hexIcon}<span>hive<span class="brand-path"> / creatorhive</span></span></a>
-    <nav aria-label="Game information"><span class="local-status"><i></i> single-player</span><button id="roadmap">multiplayer <span class="soon">Soon™</span></button><button id="privacy">privacy</button></nav>
+  <header class="masthead"><a class="brand" href="/">${hexIcon}<span>The CreatorHive... Hive</span></a>
+    <nav aria-label="Game modes"><button id="garden-tab" aria-pressed="true">Hive</button><button id="roadmap">Multiplayer <span class="soon">Soon™</span></button><button id="office-tab" aria-pressed="false">Worker Bee Sim</button></nav>
   </header>
   <main>
       <section class="arena" aria-label="3D hive game">
         <div id="world"></div>
-        <div class="arena-top">
+        <div class="arena-top garden-only">
           <div class="world-title"><span class="live-dot"></span> GARDEN_01<small>ROUND <span id="round">01</span></small></div>
           <div class="mission-status"><div><span>HIVE</span><strong id="honey">0</strong><span>/ 300</span><span id="percent">0%</span></div><div class="progress-track"><i id="honey-progress"></i></div></div>
           <div class="round-clock"><span id="phase">READY</span><strong id="timer">3:00</strong></div>
           <div class="arena-actions"><button id="sound" title="Toggle sound" aria-label="Enable sound" aria-pressed="false">♪ <span>Sound off</span></button><button id="pause" title="Pause game" aria-label="Pause game" disabled>Ⅱ</button></div>
         </div>
-        <div class="scene-label">HIVE<span>nectar drop-off</span></div>
+        <div class="scene-label garden-only">HIVE<span>nectar drop-off</span></div>
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
-        <div class="intro" id="intro"><div><h1>Collect. Return. Repeat.</h1><p>300 nectar. 3 minutes. You + 6 AI scouts.</p></div><button id="start" class="primary">Start flight <span>↗</span></button></div>
-        <div class="flight-hud" id="flight-hud" hidden><div><span>YOUR NECTAR</span><div id="bag" class="bag"></div></div><div class="boost"><span id="boost-label">BOOST READY</span><div><i id="boost-meter"></i></div></div><button id="home" title="Point to hive">⌂ <span>Return to hive</span></button></div>
-        <div class="mobile-controls" id="touch-controls"><div class="dpad"><button data-key="KeyW" aria-label="Fly forward">↑</button><button data-key="KeyA" aria-label="Fly left">←</button><button data-key="KeyS" aria-label="Fly backward">↓</button><button data-key="KeyD" aria-label="Fly right">→</button></div><div><button data-key="Space" aria-label="Fly up">↥</button><button data-key="ControlLeft" aria-label="Fly down">↧</button><button data-key="ShiftLeft">Boost</button></div></div>
+        <div class="intro garden-only" id="intro"><div><h1>Collect. Return. Repeat.</h1><p>300 nectar. 3 minutes. You + 6 AI scouts.</p></div><button id="start" class="primary">Start flight <span>↗</span></button></div>
+        <div class="flight-hud garden-only" id="flight-hud" hidden><div><span>YOUR NECTAR</span><div id="bag" class="bag"></div></div><div class="boost"><span id="boost-label">BOOST READY</span><div><i id="boost-meter"></i></div></div><button id="home" title="Point to hive">⌂ <span>Return to hive</span></button></div>
+        <div class="mobile-controls garden-only" id="touch-controls"><div class="dpad"><button data-key="KeyW" aria-label="Fly forward">↑</button><button data-key="KeyA" aria-label="Fly left">←</button><button data-key="KeyS" aria-label="Fly backward">↓</button><button data-key="KeyD" aria-label="Fly right">→</button></div><div><button data-key="Space" aria-label="Fly up">↥</button><button data-key="ControlLeft" aria-label="Fly down">↧</button><button data-key="ShiftLeft">Boost</button></div></div>
       </section>
-    <section class="controls" aria-label="Game controls"><span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> move</span><span><kbd>SPACE</kbd> / <kbd>CTRL</kbd> altitude</span><span><kbd>SHIFT</kbd> boost</span><span><kbd>P</kbd> pause</span><span class="collect-tip">flowers → hive</span></section>
-    <details class="crew"><summary><span>Flight crew <span id="crew-count">6 AI scouts</span></span><span class="crew-toggle">scores +</span></summary><div id="leaderboard"></div><p class="crew-footer">Scouts are AI. All progress resets on refresh.</p></details>
+    <section id="controls" class="controls" aria-label="Game controls"><span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> move</span><span><kbd>SPACE</kbd> / <kbd>CTRL</kbd> altitude</span><span><kbd>SHIFT</kbd> boost</span><span><kbd>P</kbd> pause</span></section>
   </main>
   <dialog id="modal"><button id="close-modal" aria-label="Close dialog">×</button><div id="modal-content"></div></dialog>`;
 
 const $ = id => document.getElementById(id);
 const game = new Game();
 let player = null, started = false, paused = false, soundEnabled = false, audio;
+let mode = 'garden', office;
 const keys = new Set();
 const modal = $('modal');
 const showModal = html => { $('modal-content').innerHTML = html; modal.showModal(); };
 $('close-modal').onclick = () => modal.close();
 modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
-$('privacy').onclick = () => showModal('<p class="eyebrow">PRIVACY</p><h2>Local session.</h2><p>No accounts, personal information, tracking, cookies, or saved progress. Everything runs in your browser and resets on refresh.</p><p>Scouts are AI. No game data is sent to external services.</p>');
 $('roadmap').onclick = () => showModal('<p class="eyebrow">MULTIPLAYER</p><h2>Soon™.</h2><p>Current mode: single-player with six AI scouts. Shared worlds are a future feature.</p>');
 $('sound').onclick = () => { soundEnabled = !soundEnabled; if (soundEnabled) { audio ??= new AudioContext(); audio.resume(); } $('sound').innerHTML = `♪ <span>Sound ${soundEnabled ? 'on' : 'off'}</span>`; $('sound').setAttribute('aria-pressed', soundEnabled); $('sound').setAttribute('aria-label', soundEnabled ? 'Disable sound' : 'Enable sound'); };
 function chime(frequency = 600) { if (!soundEnabled || !audio) return; const oscillator = audio.createOscillator(), gain = audio.createGain(); oscillator.connect(gain); gain.connect(audio.destination); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.04, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.18); oscillator.start(); oscillator.stop(audio.currentTime + 0.2); }
@@ -45,9 +45,9 @@ $('start').onclick = () => { if (!renderer) return; game.reset(); game.round = 1
 function togglePause() { if (!started) return; paused = !paused; keys.clear(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume game' : 'Pause game'); $('phase').textContent = paused ? 'PAUSED' : 'ACTIVE'; toast(paused ? 'Paused. Press P to resume.' : 'Resumed.'); }
 $('pause').onclick = togglePause;
 $('home').onclick = () => { toast('The glowing golden hive is in the center. Fly into its ring to deliver.'); hiveBeacon = 5; };
-document.addEventListener('keydown', e => { if (modal.open || !started) return; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.code === 'KeyP' && !e.repeat) togglePause(); keys.add(e.code); });
+document.addEventListener('keydown', e => { if (mode !== 'garden' || modal.open || !started) return; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.code === 'KeyP' && !e.repeat) togglePause(); keys.add(e.code); });
 document.addEventListener('keyup', e => keys.delete(e.code));
-window.addEventListener('blur', () => { keys.clear(); if (started && !paused) togglePause(); });
+window.addEventListener('blur', () => { keys.clear(); if (mode === 'garden' && started && !paused) togglePause(); });
 for (const button of document.querySelectorAll('[data-key]')) {
   button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.key); });
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => keys.delete(button.dataset.key));
@@ -144,16 +144,13 @@ function createBee(p) {
   group.position.set(p.x, p.y, p.z);
   beeModels.set(p.id, { group, body, wings, shadow, labelTexture });
 }
-function resize() { if (!renderer) return; const { width, height } = $('world').getBoundingClientRect(); renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix(); }
+function resize() { if (!renderer) return; const { width, height } = $('world').getBoundingClientRect(); renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix(); office?.resize(width, height); }
 new ResizeObserver(resize).observe($('world'));
 let lastBag = 0, lastScore = 0, lastResult = null, lastRound = 1, uiTime = 0;
 function updateUI() {
   const seconds = Math.max(0, Math.ceil(game.remaining)); $('timer').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   $('round').textContent = String(game.round).padStart(2, '0'); $('honey').textContent = game.honey;
   const percent = Math.min(100, Math.floor(game.honey / RULES.goal * 100)); $('honey-progress').style.width = `${percent}%`; $('percent').textContent = `${percent}%`;
-  $('crew-count').textContent = started ? 'YOU + 6 AI' : '6 AI SCOUTS';
-  const sorted = [...game.players.values()].sort((a, b) => b.score - a.score);
-  $('leaderboard').innerHTML = sorted.map((p, i) => `<div class="crew-row ${p.bot ? '' : 'you'}"><span class="rank">${String(i + 1).padStart(2, '0')}</span><span class="bee-avatar ${p.bot ? '' : 'your-avatar'}">${hexIcon}</span><span class="crew-name">${p.bot ? p.name : 'You'}<small>${p.bot ? 'AI SCOUT' : p.name.toUpperCase()}</small></span><strong>${p.score}<small>nectar</small></strong></div>`).join('');
   if (player) {
     $('bag').innerHTML = Array.from({ length: RULES.capacity }, (_, i) => `<i class="${i < player.bag ? 'filled' : ''}"></i>`).join('') + `<strong>${player.bag}<span> / 8</span></strong>`;
     $('boost-label').textContent = player.boost ? `BOOST IN ${Math.ceil(player.boost)}s` : 'BOOST READY'; $('boost-meter').style.width = `${(1 - player.boost / 4) * 100}%`;
@@ -173,6 +170,7 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05), elapsed = clock.elapsedTime;
   if (!renderer) return;
+  if (mode === 'office') { office.update(dt, elapsed); return; }
   if (!paused) {
     if (player) {
       const up = Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown'));
@@ -199,4 +197,22 @@ function animate() {
   renderer.render(scene, camera);
   uiTime += dt; if (uiTime > 0.12) { updateUI(); uiTime = 0; }
 }
-updateUI(); animate();
+if (renderer) office = createOffice({ renderer, container: document.querySelector('.arena'), notify: toast, chime });
+const gardenControls = $('controls').innerHTML;
+function switchMode(next) {
+  if (next === mode) return;
+  if (!office) { showModal('<h2>WebGL 2 required.</h2><p>Enable hardware acceleration to play.</p>'); return; }
+  keys.clear(); modal.close(); $('toast').classList.remove('visible');
+  mode = next; document.querySelector('.arena').classList.toggle('office-mode', next === 'office');
+  document.querySelector('.arena').setAttribute('aria-label', next === 'office' ? 'Worker Bee Sim first-person office game' : '3D hive game');
+  $('garden-tab').setAttribute('aria-pressed', next === 'garden'); $('office-tab').setAttribute('aria-pressed', next === 'office');
+  renderer.domElement.setAttribute('aria-label', next === 'office' ? 'A bee office with desks, stickman bee coworkers, and task stations' : 'A floating garden with bees and a golden hive');
+  if (next === 'office') {
+    office.activate();
+    $('controls').innerHTML = '<span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> walk</span><span><kbd>MOUSE</kbd> / drag to look</span><span><kbd>SHIFT</kbd> sprint</span><span><kbd>E</kbd> hold to work</span><span><kbd>ESC</kbd> / <kbd>P</kbd> pause</span>';
+  } else { office.deactivate(); $('controls').innerHTML = gardenControls; }
+  resize();
+}
+$('garden-tab').onclick = () => switchMode('garden');
+$('office-tab').onclick = () => switchMode('office');
+resize(); updateUI(); animate();
