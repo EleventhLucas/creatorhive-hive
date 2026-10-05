@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OfficeGame, DESKS, STATIONS } from './office-game.js';
+import { GameSettings, viewBob } from './settings.js';
 
-export function createOffice({ renderer, container, notify, chime }) {
+export function createOffice({ renderer, container, notify, settings = new GameSettings(), openSettings = () => {} }) {
   const game = new OfficeGame();
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#13231c');
   scene.fog = new THREE.Fog('#13231c', 22, 48);
@@ -99,6 +100,7 @@ export function createOffice({ renderer, container, notify, chime }) {
   root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary" data-office="start">Clock in <span>↗</span></button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
   const $ = name => root.querySelector(`[data-office="${name}"]`);
   const keys = new Set(); let active = false, started = false, paused = false, lastTouch = null;
+  let walkDistance = 0, bobHeight = 0, bobRoll = 0;
   const canvas = renderer.domElement;
   function renderIntro(title, description, button) { $('intro').hidden = false; $('intro').querySelector('h1').textContent = title; $('intro').querySelector('p').textContent = description; $('start').firstChild.textContent = button + ' '; }
   function unlock() { if (document.pointerLockElement === canvas) document.exitPointerLock(); }
@@ -127,16 +129,22 @@ export function createOffice({ renderer, container, notify, chime }) {
   }
   function update(dt, time) {
     if (!active) return;
+    const previousX = game.x, previousZ = game.z;
     if (started && !paused && !game.complete) {
       const finished = game.tick(dt, {
         forward: Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown')),
         right: Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft')),
         sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), work: keys.has('KeyE'),
       });
-      if (finished) { chime(780); notify(game.complete ? 'Shift complete.' : 'Task complete.'); keys.delete('KeyE'); }
+      if (finished) { notify(game.complete ? 'Shift complete.' : 'Task complete.'); keys.delete('KeyE'); }
       if (game.complete) { unlock(); renderIntro('Shift complete.', `4 tasks finished in ${Math.floor(game.elapsed / 60)}:${String(Math.floor(game.elapsed % 60)).padStart(2, '0')}.`, 'Next shift'); }
     }
-    camera.position.set(game.x, 1.65, game.z); camera.rotation.set(game.pitch, game.yaw, 0);
+    const walked = Math.hypot(game.x - previousX, game.z - previousZ); walkDistance += walked;
+    const bob = viewBob(walkDistance, settings.bobbing, walked > 0.001);
+    const blend = 1 - Math.exp(-12 * dt); bobHeight += (bob.height - bobHeight) * blend; bobRoll += (bob.roll - bobRoll) * blend;
+    if (!settings.bobbing) { bobHeight = 0; bobRoll = 0; }
+    camera.position.set(game.x, 1.65 + bobHeight, game.z); camera.rotation.set(game.pitch, game.yaw, bobRoll);
+    if (camera.fov !== settings.fov) { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
     $('shift').textContent = String(game.shift).padStart(2, '0'); $('task').textContent = game.station?.action ?? 'Shift complete'; $('count').textContent = `${game.task} / 4 tasks`;
     $('interact').hidden = !started || paused || game.complete;
     if (game.station) {
@@ -150,6 +158,7 @@ export function createOffice({ renderer, container, notify, chime }) {
   }
   return {
     update,
+    pause() { if (started && !game.complete) setPaused(true); },
     resize(width, height) { camera.aspect = width / height; camera.updateProjectionMatrix(); },
     activate() { active = true; root.hidden = false; container.replaceChildren(root); if (started && !game.complete) setPaused(true); },
     deactivate() { active = false; root.hidden = true; root.remove(); keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },

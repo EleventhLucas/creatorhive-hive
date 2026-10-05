@@ -1,6 +1,6 @@
 # The Hive
 
-A local, single-player 3D bee game for CreatorHive's livestream. Fly through a floating hexagonal garden, collect nectar from flowers, and return it to the golden hive. Six AI scouts contribute to a shared goal of 300 nectar in three minutes. Rounds restart automatically. **Multiplayer: Soon™** (not implemented).
+A local, single-player 3D bee game for CreatorHive's livestream. Fly through a floating hexagonal garden, collect nectar from flowers, and return it to the golden hive. Six AI scouts contribute to a shared goal of 300 nectar in three minutes. Rounds restart automatically.
 
 ## Run locally
 
@@ -14,6 +14,10 @@ npm run dev
 Open **http://127.0.0.1:5173**. Click **Start flight** to begin. The landing screen previews the AI garden.
 
 The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Hive** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating and its UI is removed from the page until you return.
+
+## Settings
+
+Open **Settings** to adjust first-person FoV (55–105°) and walking view bobbing (0–100%; 0 disables it). Reduced-motion devices default to no bobbing. Settings last for the current page session only. The volume slider is disabled and marked TODO; Worker Bee Sim has no audio.
 
 ## Worker Bee Sim
 
