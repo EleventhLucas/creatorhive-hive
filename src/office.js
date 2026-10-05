@@ -93,12 +93,20 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   // Visible stick forearms and a nectar mug: an office worker, not a weapon.
   rod([0.36, -0.6, -0.4], [0.28, -0.37, -0.65], 0.035, '#deb953', camera);
   rod([-0.35, -0.62, -0.35], [-0.26, -0.4, -0.7], 0.035, '#deb953', camera);
-  shape(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 12), '#dfbc5a', 0.27, -0.32, -0.7, camera);
-  const handle = shape(new THREE.TorusGeometry(0.055, 0.012, 6, 16), '#dfbc5a', 0.37, -0.32, -0.7, camera); handle.rotation.y = Math.PI / 2;
+  const mugTemplate = new THREE.Group();
+  shape(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 12), '#dfbc5a', 0, 0, 0, mugTemplate);
+  shape(new THREE.CylinderGeometry(0.077, 0.077, 0.012, 12), '#955823', 0, 0.085, 0, mugTemplate);
+  const handle = shape(new THREE.TorusGeometry(0.055, 0.012, 6, 16), '#dfbc5a', 0.1, 0, 0, mugTemplate); handle.rotation.y = Math.PI / 2;
+  const heldMug = mugTemplate.clone(true); heldMug.position.set(0.27, -0.32, -0.7); camera.add(heldMug);
+  const thrownMugs = new Map();
 
   const root = document.createElement('div'); root.className = 'office-ui'; root.hidden = true;
   root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary" data-office="start">Clock in <span>↗</span></button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
   const $ = name => root.querySelector(`[data-office="${name}"]`);
+  const seatHint = document.createElement('small'); seatHint.className = 'seat-hint'; $('interact').appendChild(seatHint);
+  const mugStatus = document.createElement('div'); mugStatus.className = 'office-mug'; root.appendChild(mugStatus);
+  const throwButton = document.createElement('button'); throwButton.textContent = 'Throw'; throwButton.className = 'touch-throw'; root.querySelector('.office-touch > div:last-child').appendChild(throwButton);
+  const seatButton = document.createElement('button'); seatButton.textContent = 'Sit'; seatButton.className = 'touch-seat'; root.querySelector('.office-touch > div:last-child').appendChild(seatButton);
   const keys = new Set(); let active = false, started = false, paused = false, lastTouch = null;
   let walkDistance = 0, bobHeight = 0, bobRoll = 0;
   const canvas = renderer.domElement;
@@ -114,13 +122,17 @@ export function createOffice({ renderer, container, notify, settings = new GameS
     started = true; $('pause').disabled = false; setPaused(false);
   };
   $('pause').onclick = () => { if (started && !game.complete) setPaused(!paused); };
-  canvas.addEventListener('click', () => { if (active && started && !paused && !game.complete) captureMouse(); });
+  let dragged = false;
+  function throwMug() { if (active && started && !paused && !game.complete) game.throwMug(); }
+  throwButton.onclick = throwMug;
+  seatButton.onclick = () => { if (active && started && !paused) game.toggleSeat(); };
+  canvas.addEventListener('click', () => { if (active && started && !paused && !game.complete) { if (!dragged) throwMug(); captureMouse(); } });
   document.addEventListener('pointerlockchange', () => { if (active && started && !game.complete && !paused && document.pointerLockElement !== canvas) setPaused(true); });
   document.addEventListener('mousemove', e => { if (active && !paused && document.pointerLockElement === canvas) game.look(e.movementX, e.movementY); });
-  canvas.addEventListener('pointerdown', e => { if (!active || !started || paused) return; lastTouch = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); });
-  canvas.addEventListener('pointermove', e => { if (!lastTouch || !active || paused || document.pointerLockElement === canvas) return; game.look((e.clientX - lastTouch.x) * 2, (e.clientY - lastTouch.y) * 2); lastTouch = { x: e.clientX, y: e.clientY }; });
+  canvas.addEventListener('pointerdown', e => { if (!active || !started || paused) return; dragged = false; lastTouch = { x: e.clientX, y: e.clientY }; if (document.pointerLockElement !== canvas) canvas.setPointerCapture?.(e.pointerId); });
+  canvas.addEventListener('pointermove', e => { if (!lastTouch || !active || paused || document.pointerLockElement === canvas) return; const dx = e.clientX - lastTouch.x, dy = e.clientY - lastTouch.y; if (Math.hypot(dx, dy) > 2) dragged = true; game.look(dx * 2, dy * 2); lastTouch = { x: e.clientX, y: e.clientY }; });
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(event, () => { lastTouch = null; });
-  document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) setPaused(!paused); if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
+  document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) setPaused(!paused); if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (e.code === 'KeyF' && !e.repeat && !paused) { if (game.toggleSeat()) keys.clear(); } if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
   document.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); if (active && started && !paused && !game.complete) setPaused(true); });
   for (const button of root.querySelectorAll('[data-office-key]')) {
@@ -140,11 +152,22 @@ export function createOffice({ renderer, container, notify, settings = new GameS
       if (game.complete) { unlock(); renderIntro('Shift complete.', `4 tasks finished in ${Math.floor(game.elapsed / 60)}:${String(Math.floor(game.elapsed % 60)).padStart(2, '0')}.`, 'Next shift'); }
     }
     const walked = Math.hypot(game.x - previousX, game.z - previousZ); walkDistance += walked;
-    const bob = viewBob(walkDistance, settings.bobbing, walked > 0.001);
+    const bob = viewBob(walkDistance, settings.bobbing, walked > 0.001 && game.seated === null);
     const blend = 1 - Math.exp(-12 * dt); bobHeight += (bob.height - bobHeight) * blend; bobRoll += (bob.roll - bobRoll) * blend;
     if (!settings.bobbing) { bobHeight = 0; bobRoll = 0; }
-    camera.position.set(game.x, 1.65 + bobHeight, game.z); camera.rotation.set(game.pitch, game.yaw, bobRoll);
+    camera.position.set(game.x, game.eyeHeight + bobHeight, game.z); camera.rotation.set(game.pitch, game.yaw, bobRoll);
     if (camera.fov !== settings.fov) { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
+    heldMug.visible = game.mugCooldown === 0;
+    mugStatus.hidden = !started || paused || game.complete;
+    mugStatus.textContent = game.mugCooldown ? `REFILL ${game.mugCooldown.toFixed(1)}s` : 'LMB — throw nectar';
+    seatHint.textContent = game.seated !== null ? 'F — stand up' : game.nearbyChair ? (game.occupiedChairs.has(game.nearbyChair.id) ? 'Chair occupied' : 'F — sit at computer') : '';
+    seatButton.textContent = game.seated !== null ? 'Stand' : 'Sit';
+    for (const mug of game.projectiles) {
+      if (!thrownMugs.has(mug.id)) { const model = mugTemplate.clone(true); model.scale.setScalar(1.5); scene.add(model); thrownMugs.set(mug.id, model); }
+      const model = thrownMugs.get(mug.id); model.position.set(mug.x, mug.y, mug.z); model.rotation.set(mug.age * 9, mug.age * 4, mug.age * 2);
+    }
+    const liveMugs = new Set(game.projectiles.map(mug => mug.id));
+    for (const [id, model] of thrownMugs) if (!liveMugs.has(id)) { model.removeFromParent(); thrownMugs.delete(id); }
     $('shift').textContent = String(game.shift).padStart(2, '0'); $('task').textContent = game.station?.action ?? 'Shift complete'; $('count').textContent = `${game.task} / 4 tasks`;
     $('interact').hidden = !started || paused || game.complete;
     if (game.station) {

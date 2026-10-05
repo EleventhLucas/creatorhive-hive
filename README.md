@@ -26,8 +26,10 @@ A first-person office game with stickman bee coworkers, honeycomb archives, poll
 - **WASD / arrows**: walk; **Shift**: sprint.
 - **Mouse**: look around. Clicking Clock in captures the mouse; **Esc** releases it and pauses. Dragging the game is also supported when mouse capture is unavailable.
 - **Hold E** near the highlighted station for 1.5 seconds to complete its task.
+- **F** near an unoccupied computer chair: sit / stand. You can look around, throw mugs, and do computer work while seated; walking resumes after standing up.
+- **Left click**: throw your nectar mug. A replacement appears after 0.5 seconds. Thrown mugs follow gravity, bounce off floors/walls/desktops, and disappear after four seconds.
 - **P** or the pause button: pause/resume. Resume captures the mouse again.
-- Touch devices: drag the game to look, use the direction buttons to walk, and hold **Work** at a station.
+- Touch devices: drag the game to look, use the direction buttons to walk, hold **Work** at a station, and use **Sit / Stand** and **Throw**.
 
 Furniture and walls block movement. Switching modes releases the mouse, and returning to an active office shift shows a Resume button. Both games remain entirely local, without saved progress or multiplayer.
 

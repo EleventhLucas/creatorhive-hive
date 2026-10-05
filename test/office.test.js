@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OfficeGame, STATIONS, OFFICE_BOUNDS } from '../src/office-game.js';
+import { OfficeGame, STATIONS, OFFICE_BOUNDS, CHAIRS } from '../src/office-game.js';
 
 test('office walking stops at desks and room boundaries', () => {
   const game = new OfficeGame(); game.x = -7; game.z = -3;
@@ -10,6 +10,28 @@ test('office walking stops at desks and room boundaries', () => {
   game.x = 0; game.z = 8;
   for (let i = 0; i < 200; i++) game.tick(0.05, { right: 1, sprint: true });
   assert.ok(game.x <= OFFICE_BOUNDS.x); assert.ok(game.canStand(game.x, game.z));
+});
+test('chair sitting blocks walking, allows computer work, and returns to a safe standing point', () => {
+  const game = new OfficeGame(); game.x = -8; game.z = -2.9;
+  const before = { x: game.x, z: game.z };
+  assert.equal(game.toggleSeat(), true); assert.equal(game.seated, 0);
+  assert.equal(game.x, CHAIRS[0].x); assert.equal(game.z, CHAIRS[0].z); assert.ok(game.eyeHeight < 1.65);
+  game.tick(0.05, { forward: 1, right: 1 }); assert.equal(game.x, CHAIRS[0].x); assert.equal(game.z, CHAIRS[0].z);
+  for (let i = 0; i < 30; i++) game.tick(0.05, { work: true }); assert.equal(game.task, 1);
+  assert.equal(game.toggleSeat(), true); assert.equal(game.seated, null); assert.equal(game.eyeHeight, 1.65);
+  assert.deepEqual({ x: game.x, z: game.z }, before); assert.ok(game.canStand(game.x, game.z));
+  game.occupiedChairs.add(0); assert.equal(game.toggleSeat(), false, 'occupied chairs cannot be used');
+});
+test('mugs aim with the view, refill in half a second, bounce inside the office, and expire', () => {
+  const game = new OfficeGame(); game.pitch = 0.3;
+  assert.equal(game.throwMug(), true); assert.equal(game.throwMug(), false); assert.equal(game.projectiles.length, 1);
+  assert.ok(game.projectiles[0].vy > 1.7); assert.ok(game.projectiles[0].vz < 0);
+  for (let i = 0; i < 9; i++) game.tick(0.05); assert.equal(game.throwMug(), false);
+  game.tick(0.05); assert.equal(game.mugCooldown, 0); assert.equal(game.throwMug(), true);
+  for (let i = 0; i < 82; i++) game.tick(0.05);
+  assert.equal(game.projectiles.length, 0);
+  game.z = -9; game.yaw = 0; game.pitch = 0; game.throwMug();
+  game.tick(0.05); assert.ok(game.projectiles[0].z >= -9.7); assert.ok(game.projectiles[0].vz > 0, 'wall impact reverses the mug');
 });
 test('diagonal walking is normalized and looking rotates movement', () => {
   const straight = new OfficeGame(), diagonal = new OfficeGame();

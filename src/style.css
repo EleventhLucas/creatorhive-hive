@@ -146,6 +146,9 @@ dialog p { font-size: 11px; line-height: 1.9; color: var(--muted); }
 .office-ui:has(.intro:not([hidden])) .crosshair { display: none; }
 .office-interact { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); background: #0b1512ed; border: 1px solid #5c7951; padding: 13px 18px; text-align: center; font-size: 11px; color: #d1e6b9; width: max-content; max-width: 90%; border-radius: 3px; }
 .office-interact .progress-track { margin-top: 10px; }
+.seat-hint { display: block; font-size: 9px; color: var(--green); margin-top: 9px; }
+.seat-hint:empty { display: none; }
+.office-mug { position: absolute; bottom: 28px; right: 20px; font-size: 9px; color: #b7c598; }
 .office-touch { display: none; }
 .toast { z-index: 2; }
 @media (max-width: 950px) { .brand { font-size: 13px; } .masthead nav { gap: 16px; } }
@@ -165,6 +168,10 @@ dialog p { font-size: 11px; line-height: 1.9; color: var(--muted); }
   .office-touch .dpad { display: grid; grid-template-columns: repeat(3,38px); gap: 4px; }
   .office-touch button { width: 38px; height: 38px; border-radius: 3px; border: 1px solid #5c7951; background: #0e2118dd; color: var(--green); touch-action: none; font-size: 16px; }
   .office-touch > div:last-child { display: flex; align-items: end; }
+  .office-touch > div:last-child { gap: 5px; }
+  .office-touch .touch-throw { width: 58px; font-size: 10px; }
+  .office-touch .touch-seat { width: 44px; font-size: 10px; }
+  .office-mug { right: 13px; bottom: 65px; font-size: 8px; }
   .office-touch button[data-office-key="KeyE"] { width: 58px; font-size: 10px; }
   .office-ui:has(.intro:not([hidden])) .office-touch { display: none; }
 }
