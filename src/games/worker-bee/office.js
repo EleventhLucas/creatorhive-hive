@@ -17,7 +17,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   const scene = new THREE.Scene(); scene.background = new THREE.Color(palette.fog);
   scene.fog = new THREE.Fog(palette.fog, 22, 48);
   const camera = new THREE.PerspectiveCamera(75, 1, 0.08, 70); camera.rotation.order = 'YXZ'; scene.add(camera);
-  scene.add(new THREE.HemisphereLight('#fff6ed', '#6c7298', 2));
+  scene.add(new THREE.HemisphereLight('#fff5e5', '#686b65', 2));
   const sunlight = new THREE.DirectionalLight('#fff0df', 2); sunlight.position.set(-9, 12, -2); scene.add(sunlight);
   const cache = new Map();
   function mat(color, glow = false) { const key = `${color}:${glow}`; if (!cache.has(key)) cache.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.7, ...(glow ? { emissive: color, emissiveIntensity: 0.7 } : {}) })); return cache.get(key); }
@@ -29,19 +29,19 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     const m = shape(new THREE.CylinderGeometry(r, r, delta.length(), 8), color, 0, 0, 0, parent);
     m.position.copy(start.add(end).multiplyScalar(0.5)); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize()); return m;
   }
-  function sign(text, x, y, z, width = 3, parent = scene, accent = '#91c9ed') {
+  function sign(text, x, y, z, width = 3, parent = scene, accent = '#a6b5ad') {
     const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128;
-    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#263248'; ctx.fillRect(0, 0, 512, 128); ctx.strokeStyle = accent; ctx.lineWidth = 4; ctx.strokeRect(2, 2, 508, 124);
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#30373b'; ctx.fillRect(0, 0, 512, 128); ctx.strokeStyle = accent; ctx.lineWidth = 4; ctx.strokeRect(2, 2, 508, 124);
     ctx.fillStyle = '#fff5ee'; ctx.textAlign = 'center'; ctx.font = '25px monospace'; ctx.fillText(text, 256, 75);
     const texture = new THREE.CanvasTexture(canvas);
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(width, width / 4), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })); panel.position.set(x, y, z); parent.add(panel); return panel;
   }
   box(26, 0.15, 20, palette.floor, 0, -0.08, 0);
-  const grid = new THREE.GridHelper(26, 26, '#8994b1', '#697792'); grid.position.y = 0.01; scene.add(grid);
+  const grid = new THREE.GridHelper(26, 26, '#92968f', '#82877f'); grid.position.y = 0.01; scene.add(grid);
   box(26, 4, 0.2, palette.walls[0], 0, 2, -10); box(26, 4, 0.2, palette.walls[1], 0, 2, 10);
   box(0.2, 4, 20, palette.walls[2], -13, 2, 0); box(0.2, 4, 20, palette.walls[3], 13, 2, 0);
   box(26, 0.15, 20, palette.ceiling, 0, 4.05, 0);
-  for (const x of [-9, -3, 3, 9]) for (const z of [-5, 4]) box(2.6, 0.03, 0.2, '#f7eeff', x, 3.94, z, scene, true);
+  for (const x of [-9, -3, 3, 9]) for (const z of [-5, 4]) box(2.6, 0.03, 0.2, '#fff5e4', x, 3.94, z, scene, true);
   // Sky-blue windows and hexagonal trim give the office its hive architecture.
   for (let z = -7; z <= 7; z += 4.5) {
     box(0.08, 1.7, 3.2, '#92d7f7', -12.86, 2.2, z, scene, true);
@@ -57,25 +57,25 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     box(1.1, 0.75, 0.1, palette.frame, d.x, 1.52, d.z - 0.23);
     monitors.push(box(0.94, 0.58, 0.02, '#b9d9f5', d.x, 1.54, d.z - 0.17, scene, true));
     box(0.1, 0.3, 0.1, palette.frame, d.x, 1.17, d.z - 0.23);
-    box(0.85, 0.04, 0.3, '#d8d9eb', d.x, 1.06, d.z + 0.35);
+    box(0.85, 0.04, 0.3, '#d5d4ca', d.x, 1.06, d.z + 0.35);
     box(0.7, 0.15, 0.65, colors.chair, d.x, 0.55, d.z + 1.1);
     box(0.7, 0.7, 0.12, colors.chair, d.x, 0.92, d.z + 1.4);
-    box(0.08, 0.5, 0.08, '#aab3c9', d.x, 0.25, d.z + 1.1);
+    box(0.08, 0.5, 0.08, '#9a9f9e', d.x, 0.25, d.z + 1.1);
     // Low dividers stay inside the desk collision footprint.
     box(3.3, 0.75, 0.09, colors.divider, d.x, 1.35, d.z - 0.59);
     shape(new THREE.CylinderGeometry(0.1, 0.08, 0.2, 12), palette.accents[index], d.x + 0.9, 1.14, d.z + 0.2);
   }
   const monitorMedia = createMonitorMedia(monitors, { random });
-  box(2.8, 1.05, 1.1, '#648cb3', 9.5, 0.53, -8);
-  box(1.2, 0.5, 0.7, '#ece0f5', 9.5, 1.32, -8);
-  box(0.85, 0.06, 0.4, '#fff2e8', 9.5, 1.59, -7.8);
-  box(2.8, 1.1, 1.1, '#a482bd', -9.5, 0.55, 8);
+  box(2.8, 1.05, 1.1, '#858e91', 9.5, 0.53, -8);
+  box(1.2, 0.5, 0.7, '#d9d9d0', 9.5, 1.32, -8);
+  box(0.85, 0.06, 0.4, '#f1ecdf', 9.5, 1.59, -7.8);
+  box(2.8, 1.1, 1.1, '#aa855d', -9.5, 0.55, 8);
   for (let i = 0; i < 8; i++) {
-    const hex = shape(new THREE.CylinderGeometry(0.3, 0.3, 0.14, 6), palette.accents[i % palette.accents.length], -10.45 + i % 4 * 0.63, 0.35 + Math.floor(i / 4) * 0.55, 7.38); hex.rotation.x = Math.PI / 2;
+    const hex = shape(new THREE.CylinderGeometry(0.3, 0.3, 0.14, 6), palette.folders[i % palette.folders.length], -10.45 + i % 4 * 0.63, 0.35 + Math.floor(i / 4) * 0.55, 7.38); hex.rotation.x = Math.PI / 2;
   }
-  box(2.8, 1.05, 1.1, '#68acb3', 9.5, 0.53, 8);
-  shape(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 12), '#fab38c', 9.5, 1.5, 8);
-  box(0.12, 0.14, 0.35, '#52647f', 9.5, 1.3, 7.57);
+  box(2.8, 1.05, 1.1, '#8a969a', 9.5, 0.53, 8);
+  shape(new THREE.CylinderGeometry(0.3, 0.3, 0.9, 12), '#dcbf6b', 9.5, 1.5, 8);
+  box(0.12, 0.14, 0.35, '#606c72', 9.5, 1.3, 7.57);
   sign('NECTAR > COFFEE', 9.5, 2.7, 9.86, 3).rotation.y = Math.PI;
   const stationMarkers = STATIONS.map((s, index) => {
     const accent = palette.stations[index];
@@ -105,7 +105,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
       const wing = ball(0.3, palette.wings[index % palette.wings.length], side * 0.22, 1.3, -0.17, body); wing.scale.set(0.65, 1, 0.12); wings.push(wing);
     }
     rod([0, 0.9, 0], [0, 1.51, 0], 0.055, palette.frame, body);
-    const abdomen = ball(0.23, accent, 0, 1.03, -0.02, body); abdomen.scale.set(0.8, 1.35, 0.8);
+    const abdomen = ball(0.23, '#e9c45f', 0, 1.03, -0.02, body); abdomen.scale.set(0.8, 1.35, 0.8);
     for (const y of [0.92, 1.09]) shape(new THREE.CylinderGeometry(0.18, 0.18, 0.07, 12), palette.frame, 0, y, -0.02, body);
     box(0.09, 0.22, 0.045, accent, 0, 1.36, 0.065, body);
     return { root: bee, body, arms, forearms, thighs, calves, hands, wings };
@@ -117,21 +117,20 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   });
   const colleagues = coworkers.workers.map(worker => { const model = stickBee(worker.x, worker.z, worker.yaw, worker.id); model.root.name = `worker-bee-${worker.id}`; return model; });
   for (const x of [-11.5, 11.5]) {
-    shape(new THREE.CylinderGeometry(0.3, 0.2, 0.5, 6), x < 0 ? '#dc92b5' : '#8bafe1', x, 0.25, 1.8);
-    rod([x, 0.4, 1.8], [x, 1.5, 1.8], 0.04, '#73baa6', scene);
-    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; const petal = ball(0.18, palette.accents[(i + (x < 0 ? 0 : 2)) % palette.accents.length], x + Math.cos(a) * 0.24, 1.5, 1.8 + Math.sin(a) * 0.24); petal.scale.y = 0.4; }
+    shape(new THREE.CylinderGeometry(0.3, 0.2, 0.5, 6), '#ac795d', x, 0.25, 1.8);
+    rod([x, 0.4, 1.8], [x, 1.5, 1.8], 0.04, '#729453', scene);
+    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; const petal = ball(0.18, x < 0 ? '#dbaa68' : '#d793a1', x + Math.cos(a) * 0.24, 1.5, 1.8 + Math.sin(a) * 0.24); petal.scale.y = 0.4; }
   }
   // Visible stick forearms and a nectar mug: an office worker, not a weapon.
   rod([0.36, -0.6, -0.4], [0.28, -0.37, -0.65], 0.035, '#deb953', camera);
   rod([-0.35, -0.62, -0.35], [-0.26, -0.4, -0.7], 0.035, '#deb953', camera);
   const mugTemplate = new THREE.Group();
-  shape(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 12), palette.accents[0], 0, 0, 0, mugTemplate).name = 'mug-shell';
+  shape(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 12), palette.playerMug, 0, 0, 0, mugTemplate).name = 'mug-shell';
   shape(new THREE.CylinderGeometry(0.077, 0.077, 0.012, 12), '#955823', 0, 0.085, 0, mugTemplate);
-  const handle = shape(new THREE.TorusGeometry(0.055, 0.012, 6, 16), palette.accents[0], 0.1, 0, 0, mugTemplate); handle.rotation.y = Math.PI / 2; handle.name = 'mug-handle';
+  const handle = shape(new THREE.TorusGeometry(0.055, 0.012, 6, 16), palette.playerMug, 0.1, 0, 0, mugTemplate); handle.rotation.y = Math.PI / 2; handle.name = 'mug-handle';
   function paintMug(model, color) { model.traverse(part => { if (part.name === 'mug-shell' || part.name === 'mug-handle') part.material = mat(color); }); }
   function makeMug(color) { const model = mugTemplate.clone(true); paintMug(model, color); return model; }
-  let heldMugColor = 0;
-  const heldMug = makeMug(palette.accents[0]); heldMug.name = 'held-nectar-mug'; heldMug.position.set(0.27, -0.32, -0.7); camera.add(heldMug);
+  const heldMug = makeMug(palette.playerMug); heldMug.name = 'held-nectar-mug'; heldMug.position.set(0.27, -0.32, -0.7); camera.add(heldMug);
   for (const [index, model] of colleagues.entries()) { model.mug = makeMug(palette.accents[index]); model.hands[1].add(model.mug); }
   const thrownMugs = new Map();
 
@@ -230,14 +229,12 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     camera.position.set(game.x, game.eyeHeight + bobHeight, game.z); camera.rotation.set(game.pitch, game.yaw, bobRoll);
     if (camera.fov !== settings.fov) { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
     heldMug.visible = game.mugCooldown === 0;
-    const mugColor = game.nextMug % palette.accents.length;
-    if (mugColor !== heldMugColor) { paintMug(heldMug, palette.accents[mugColor]); heldMugColor = mugColor; }
     mugStatus.hidden = !started || paused || game.complete;
     mugStatus.textContent = game.gliding ? `≋ GLIDE ${game.glideRemaining.toFixed(1)}s` : game.mugCooldown ? `REFILL ${game.mugCooldown.toFixed(1)}s` : 'LMB — throw nectar';
     seatHint.textContent = game.seated !== null ? 'F — stand up' : game.nearbyChair ? (game.occupiedChairs.has(game.nearbyChair.id) ? 'Chair occupied' : 'F — sit at computer') : '';
     seatButton.textContent = game.seated !== null ? 'Stand' : 'Sit';
     for (const mug of game.projectiles) {
-      if (!thrownMugs.has(mug.id)) { const model = makeMug(palette.accents[(mug.id - 1) % palette.accents.length]); model.name = `thrown-nectar-mug-${mug.id}`; model.scale.setScalar(1.5); scene.add(model); thrownMugs.set(mug.id, model); }
+      if (!thrownMugs.has(mug.id)) { const model = makeMug(palette.playerMug); model.name = `thrown-nectar-mug-${mug.id}`; model.scale.setScalar(1.5); scene.add(model); thrownMugs.set(mug.id, model); }
       const model = thrownMugs.get(mug.id); model.position.set(mug.x, mug.y, mug.z); model.rotation.set(mug.age * 9, mug.age * 4, mug.age * 2);
     }
     const liveMugs = new Set(game.projectiles.map(mug => mug.id));

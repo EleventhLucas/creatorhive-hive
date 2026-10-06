@@ -30,7 +30,7 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
   scene.fog = new THREE.Fog(palette.sky, 45, 95);
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 150);
   camera.position.set(28, 32, 35); camera.lookAt(0, 0, 0);
-  scene.add(new THREE.HemisphereLight('#fff1f7', '#55618f', 2.4));
+  scene.add(new THREE.HemisphereLight('#fff4df', '#4b6151', 2.4));
   const sun = new THREE.DirectionalLight('#fff0c5', 3.2); sun.position.set(-12, 30, 15); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -25, right: 25, top: 25, bottom: -25, far: 70 }); sun.shadow.bias = -0.001; scene.add(sun);
   const materials = new Map();
   function material(color, extra = {}) { const key = color + JSON.stringify(extra); if (!materials.has(key)) materials.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra })); return materials.get(key); }
@@ -46,15 +46,14 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
   for (let q = -7; q <= 7; q++) for (let r = -7; r <= 7; r++) {
     const x = Math.sqrt(3) * 1.7 * (q + r / 2), z = 2.55 * r;
     if (Math.hypot(x, z) > 18.8) continue;
-    const sector = Math.floor((Math.atan2(z, x) + Math.PI) / (Math.PI * 2) * palette.tiles.length) % palette.tiles.length;
-    const color = palette.tiles[(sector + (random() < 0.18 ? 1 : 0)) % palette.tiles.length];
+    const color = palette.tiles[Math.floor(random() * palette.tiles.length)];
     mesh(tileGeometry, color, island, x, -0.35 + random() * 0.07, z);
     if (Math.hypot(x, z) > 16) mesh(cylinder(1.52, 0.8, 3 + random() * 2), palette.soil, island, x, -2.5, z);
   }
   mesh(cylinder(17.8, 12, 5, 6), palette.soil, island, 0, -3.2, 0);
   mesh(cylinder(12, 3, 5, 6), palette.bedrock, island, 0, -7.2, 0);
   const ground = mesh(new THREE.PlaneGeometry(200, 200), palette.sky, scene, 0, -13, 0); ground.rotation.x = -Math.PI / 2; ground.castShadow = false;
-  const grid = new THREE.GridHelper(140, 56, '#555278', '#363d5d'); grid.position.y = -12.98; grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
+  const grid = new THREE.GridHelper(140, 56, '#425868', '#314858'); grid.position.y = -12.98; grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
   // Grass blades are instanced to keep the scene light on the GPU.
   const grass = new THREE.InstancedMesh(new THREE.ConeGeometry(0.065, 0.55, 3), material('#ffffff'), 550);
   const dummy = new THREE.Object3D();
@@ -71,8 +70,8 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
   const petals = palette.flowers;
   for (const f of FLOWERS) {
     const group = new THREE.Group(); group.position.set(f.x, 0, f.z); scene.add(group);
-    mesh(cylinder(0.07, 0.09, 1.5, 5), '#669e96', group, 0, 0.75, 0);
-    const leaf = orb(group, '#8ac4ad', 0.25, 0.75, 0, 0.4, 0.06, 0.17); leaf.rotation.z = 0.4;
+    mesh(cylinder(0.07, 0.09, 1.5, 5), '#64864d', group, 0, 0.75, 0);
+    const leaf = orb(group, '#86a563', 0.25, 0.75, 0, 0.4, 0.06, 0.17); leaf.rotation.z = 0.4;
     for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; const p = orb(group, petals[f.id % petals.length], Math.cos(a) * 0.48, 1.6, Math.sin(a) * 0.48, 0.43, 0.14, 0.28); p.rotation.y = -a; }
     orb(group, '#f8cc58', 0, 1.65, 0, 0.32, 0.18, 0.32);
     const nectar = mesh(new THREE.OctahedronGeometry(0.14), '#fff4bb', group, 0, 2.3, 0, { emissive: '#ffe69a', emissiveIntensity: 0.6 });
@@ -80,10 +79,10 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
   }
   for (let i = 0; i < 12; i++) {
     const a = i * Math.PI * 2 / 12 + 0.12, r = 16 + random(); const tree = new THREE.Group(); tree.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(tree);
-    const h = 1.8 + random() * 1.7; mesh(cylinder(0.15, 0.22, h, 6), '#8e7286', tree, 0, h / 2, 0);
+    const h = 1.8 + random() * 1.7; mesh(cylinder(0.15, 0.22, h, 6), '#806145', tree, 0, h / 2, 0);
     orb(tree, palette.foliage[i % palette.foliage.length], 0, h + 0.6, 0, 0.9, 1.2, 0.9); orb(tree, palette.foliage[(i + 1) % palette.foliage.length], 0.35, h + 1.25, 0, 0.75, 0.8, 0.75);
   }
-  for (let i = 0; i < 26; i++) { const a = random() * Math.PI * 2, r = 15 + random() * 3; const rock = mesh(new THREE.DodecahedronGeometry(0.25 + random() * 0.4), ['#c9b9dc', '#a9c7e0', '#dfbcb0'][i % 3], scene, Math.cos(a) * r, 0.15, Math.sin(a) * r); rock.scale.y = 0.6; }
+  for (let i = 0; i < 26; i++) { const a = random() * Math.PI * 2, r = 15 + random() * 3; const rock = mesh(new THREE.DodecahedronGeometry(0.25 + random() * 0.4), ['#aaa79a', '#92968c', '#b5aa93'][i % 3], scene, Math.cos(a) * r, 0.15, Math.sin(a) * r); rock.scale.y = 0.6; }
   const motesGeometry = new THREE.BufferGeometry(); const motePositions = new Float32Array(90 * 3);
   for (let i = 0; i < 90; i++) { motePositions[i * 3] = (random() - 0.5) * 38; motePositions[i * 3 + 1] = 1 + random() * 7; motePositions[i * 3 + 2] = (random() - 0.5) * 38; }
   motesGeometry.setAttribute('position', new THREE.BufferAttribute(motePositions, 3)); const motes = new THREE.Points(motesGeometry, new THREE.PointsMaterial({ color: '#fff2c0', size: 0.07, transparent: true, opacity: 0.8 })); scene.add(motes);
@@ -92,9 +91,9 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
     const group = new THREE.Group(); scene.add(group);
     const body = new THREE.Group(); group.add(body);
     orb(body, p.bot ? palette.bees[p.id % palette.bees.length] : '#ffd052', 0, 0, 0, 0.32, 0.3, 0.52);
-    for (const z of [-0.2, 0.12]) { const band = mesh(cylinder(0.305, 0.305, 0.13, 16), '#36344d', body, 0, 0, z); band.rotation.x = Math.PI / 2; }
-    orb(body, '#36344d', 0, 0.04, 0.44, 0.29, 0.27, 0.23);
-    for (const x of [-0.13, 0.13]) { orb(body, '#fff7d7', x, 0.13, 0.61, 0.07); orb(body, '#272b45', x, 0.13, 0.66, 0.035); const antenna = mesh(cylinder(0.015, 0.02, 0.24, 5), '#36344d', body, x, 0.36, 0.47); antenna.rotation.z = x * -3; }
+    for (const z of [-0.2, 0.12]) { const band = mesh(cylinder(0.305, 0.305, 0.13, 16), '#34352d', body, 0, 0, z); band.rotation.x = Math.PI / 2; }
+    orb(body, '#34352d', 0, 0.04, 0.44, 0.29, 0.27, 0.23);
+    for (const x of [-0.13, 0.13]) { orb(body, '#fff7d7', x, 0.13, 0.61, 0.07); orb(body, '#282f29', x, 0.13, 0.66, 0.035); const antenna = mesh(cylinder(0.015, 0.02, 0.24, 5), '#34352d', body, x, 0.36, 0.47); antenna.rotation.z = x * -3; }
     const wings = [];
     for (const side of [-1, 1]) { const wing = orb(body, p.bot ? palette.wings[p.id % palette.wings.length] : '#fff8e4', side * 0.36, 0.22, -0.06, 0.4, 0.035, 0.22, { transparent: true, opacity: 0.65, roughness: 0.3 }); wings.push(wing); }
     const shadow = mesh(new THREE.CircleGeometry(p.bot ? 0.35 : 0.5, 24), p.bot ? palette.bees[p.id % palette.bees.length] : '#f9d260', scene, 0, 0.08, 0, { transparent: true, opacity: 0.4 }); shadow.rotation.x = -Math.PI / 2; shadow.castShadow = false;

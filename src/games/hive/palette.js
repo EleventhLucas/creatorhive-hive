@@ -1,8 +1,9 @@
+// Grass, earth, stone, and honey stay natural; flowers provide the brighter colors.
 export const GARDEN_PALETTE = {
-  sky: '#242b45', soil: '#76668f', bedrock: '#555b80',
-  tiles: ['#6595b5', '#828fbd', '#a185b8', '#bf8fa7', '#c2a28a', '#70aaa0'],
-  flowers: ['#ff8caa', '#80c8ff', '#c59bff', '#ffae79', '#8fe0cd', '#ec96d1'],
-  foliage: ['#69b4a7', '#80a9d1', '#b495d0', '#df9bae', '#acbd7c', '#83bdc5'],
-  bees: ['#ffad82', '#86ceef', '#c6a3ee', '#f29fc8', '#93dcc7', '#efa7a3'],
-  wings: ['#e5d7ff', '#cff2ff', '#ffe0f0', '#d3f9ec'],
+  sky: '#263c4b', soil: '#81674d', bedrock: '#655c50',
+  tiles: ['#638554', '#6b8b59', '#789563', '#5d7e52', '#718c56', '#809661'],
+  flowers: ['#e68f9e', '#84b4de', '#b39ad5', '#e9ac67', '#eee0c0', '#d47785'],
+  foliage: ['#659354', '#739e5e', '#83a266', '#587e4a', '#91a86b', '#6b9156'],
+  bees: ['#e6b54e', '#dca83e', '#edc565', '#e3af43', '#d5a74e', '#e8ba56'],
+  wings: ['#f1f1e5', '#e3ece8'],
 };
