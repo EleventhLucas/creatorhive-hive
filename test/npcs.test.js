@@ -51,3 +51,32 @@ test('coworkers wait instead of taking a chair occupied by the player', () => {
   for (let i = 0; i < 70; i++) crew.tick(0.05);
   assert.equal(worker.state, 'working'); assert.ok(game.occupiedChairs.has(chair.id));
 });
+test('rapid direct hits trigger each random knockdown style and safe respawn', () => {
+  for (const [random, style, threshold] of [[0, 'crumple', 2], [0.5, 'ragdoll', 4], [0.99, 'burst', 5]]) {
+    const game = new OfficeGame(), crew = new OfficeCoworkers(game, { random: () => random });
+    const worker = crew.workers[0];
+    assert.equal(worker.hitThreshold, threshold);
+    crew.tick(0.05, [{ x: worker.x, z: worker.z }]);
+    assert.equal(worker.hitTimes.length, 0, 'nearby floor impacts do not count as hits');
+    for (let i = 0; i < threshold - 1; i++) crew.tick(0.05, [], [{ workerId: worker.id }]);
+    assert.notEqual(worker.state, 'down');
+    crew.tick(0.05, [], [{ workerId: worker.id }]);
+    assert.equal(worker.state, 'down'); assert.equal(worker.deathStyle, style);
+    assert.ok(!game.occupiedChairs.has(worker.chairId)); assert.ok(!game.workerPositions.includes(worker));
+    for (let i = 0; i < 53; i++) crew.tick(0.05);
+    assert.equal(worker.state, 'standing'); assert.ok(game.canStand(worker.x, worker.z));
+    assert.ok(Math.hypot(worker.x - game.x, worker.z - game.z) > 1);
+    assert.equal(worker.hitTimes.length, 0); assert.ok(game.workerPositions.includes(worker));
+  }
+});
+test('hits outside the four second succession window do not stack', () => {
+  const crew = new OfficeCoworkers(new OfficeGame(), { random: () => 0 });
+  crew.hit(0); for (let i = 0; i < 81; i++) crew.tick(0.05);
+  crew.hit(0); assert.notEqual(crew.workers[0].state, 'down'); assert.equal(crew.workers[0].hitTimes.length, 1);
+});
+test('fast mugs hit a coworker between frames and cannot count twice', () => {
+  const game = new OfficeGame(); game.workerPositions = [{ id: 7, chairId: 0, x: 0, z: 0 }];
+  game.projectiles = [{ id: 1, x: 0, y: 1.5, z: 0.5, vx: 0, vy: 0, vz: -20, age: 0, hitWorkers: new Set() }];
+  game.stepMugs(0.05); assert.deepEqual(game.hits, [{ workerId: 7, mugId: 1 }]);
+  for (let i = 0; i < 10; i++) { game.stepMugs(0.05); assert.equal(game.hits.length, 0); }
+});

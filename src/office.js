@@ -100,6 +100,11 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     for (const y of [0.92, 1.09]) shape(new THREE.CylinderGeometry(0.18, 0.18, 0.07, 12), '#263328', 0, y, -0.02, body);
     return { root: bee, body, arms, forearms, thighs, calves, hands, wings };
   }
+  const deathBursts = coworkers.workers.map(() => {
+    const group = new THREE.Group(); group.visible = false; scene.add(group);
+    for (let i = 0; i < 12; i++) shape(new THREE.OctahedronGeometry(0.09), i % 2 ? '#f1ce50' : '#20251b', 0, 0, 0, group);
+    return group;
+  });
   const colleagues = coworkers.workers.map(worker => { const model = stickBee(worker.x, worker.z, worker.yaw); model.root.name = `worker-bee-${worker.id}`; return model; });
   for (const x of [-11.5, 11.5]) {
     shape(new THREE.CylinderGeometry(0.3, 0.2, 0.5, 6), '#bca164', x, 0.25, 1.8);
@@ -208,11 +213,26 @@ export function createOffice({ renderer, container, notify, settings, openDialog
       $('progress').style.width = `${game.progress / 1.5 * 100}%`;
     }
     stationMarkers.forEach((m, i) => { const current = i === game.task; m.ring.visible = current; m.pointer.visible = current; m.pointer.position.y = 2.05 + Math.sin(npcTime * 2.8) * 0.2; m.label.material.opacity = current ? 1 : 0.55; m.label.material.transparent = true; m.label.rotation.y = Math.atan2(game.x - m.label.position.x, game.z - m.label.position.z); });
-    if (!paused && !game.complete) { coworkers.tick(dt, started ? game.impacts : []); npcTime += dt; }
+    if (!paused && !game.complete) { coworkers.tick(dt, started ? game.impacts : [], started ? game.hits : []); npcTime += dt; }
     coworkers.workers.forEach((worker, i) => {
       const model = colleagues[i], sitting = coworkers.isSeated(worker), walking = worker.state === 'walking';
       const gait = Math.sin(worker.walkDistance * 8), idle = Math.sin(npcTime * 1.4 + i);
-      model.root.position.set(worker.x, 0, worker.z);
+      const down = worker.state === 'down', age = worker.deathAge;
+      const fall = Math.min(1, age * 3), burst = deathBursts[i];
+      model.root.visible = !down || (worker.deathStyle !== 'burst' && age < 2.2);
+      model.root.scale.set(1, down && worker.deathStyle === 'crumple' ? 1 - fall * 0.72 : 1, 1);
+      model.root.rotation.x = down && worker.deathStyle === 'ragdoll' ? -fall * Math.PI / 2 : 0;
+      model.root.rotation.z = down && worker.deathStyle === 'ragdoll' ? Math.sin(age * 14) * (1 - fall) * 0.3 : 0;
+      model.root.position.set(worker.x, down && worker.deathStyle === 'ragdoll' ? fall * 0.2 : 0, worker.z);
+      burst.visible = down && worker.deathStyle === 'burst' && age < 1.5;
+      if (burst.visible) {
+        burst.position.set(worker.x, 1, worker.z);
+        burst.children.forEach((piece, j) => {
+          const angle = j * Math.PI * 2 / burst.children.length;
+          piece.position.set(Math.cos(angle) * age * 2, Math.sin(j * 7) * age + 2 * age - 3 * age * age, Math.sin(angle) * age * 2);
+          piece.rotation.set(age * 8 + j, age * 5, age * 4); piece.scale.setScalar(Math.max(0, 1 - age / 1.5));
+        });
+      }
       const turn = Math.atan2(Math.sin(worker.yaw - model.root.rotation.y), Math.cos(worker.yaw - model.root.rotation.y)); model.root.rotation.y += turn * Math.min(1, dt * 8);
       const height = sitting ? -0.25 : walking ? Math.abs(gait) * 0.025 : idle * 0.01;
       model.body.position.y += (height - model.body.position.y) * Math.min(1, dt * 12);
@@ -225,6 +245,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
         model.forearms[side].rotation.x = sitting ? -1 : 0;
         if (worker.state === 'drinking' && side === 1) { model.arms[side].rotation.x = -2.2 + idle * 0.12; model.forearms[side].rotation.x = -0.7; }
         if (worker.state === 'chatting' && side === 0) { model.arms[side].rotation.x = -0.9 + idle * 0.2; model.forearms[side].rotation.x = -0.4; }
+        if (down) { model.thighs[side].rotation.x = fall * -1.4; model.calves[side].rotation.x = fall * 1.8; model.arms[side].rotation.x = fall * -2; }
         if (worker.state === 'reacting') { model.arms[side].rotation.x = -1.9; model.forearms[side].rotation.x = -0.8; }
         model.wings[side].rotation.y = sign * (0.1 + idle * 0.04);
       }

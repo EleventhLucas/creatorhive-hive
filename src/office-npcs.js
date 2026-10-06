@@ -36,19 +36,20 @@ const BREAK_SPOTS = [
 export class OfficeCoworkers {
   constructor(game, { random = Math.random } = {}) { this.game = game; this.random = random; this.reset(); }
   reset() {
+    this.elapsed = 0;
     this.workers = [1, 2, 4, 3, 5].map((chairId, id) => {
       const chair = CHAIRS[chairId], sitting = id < 3;
       return { id, chairId, x: sitting ? chair.x : id === 3 ? 6 : -6, z: sitting ? chair.z : id === 3 ? 2 : 6,
         yaw: sitting ? Math.PI : 0, state: sitting ? 'working' : 'standing', timer: 4 + id * 1.6 + this.random() * 4,
         walkDistance: 0, path: [], destination: null, returning: false, onBreak: false, blockedTime: 0,
-        reactionCooldown: 0, saved: null };
+        reactionCooldown: 0, saved: null, hitTimes: [], hitThreshold: 2 + Math.floor(this.random() * 4), deathStyle: null, deathAge: 0 };
     });
     this.syncChairs();
   }
   isSeated(worker) { return worker.state === 'working' || (worker.state === 'reacting' && worker.saved?.state === 'working'); }
   syncChairs() {
     this.game.occupiedChairs = new Set(this.workers.filter(w => this.isSeated(w)).map(w => w.chairId));
-    this.game.workerPositions = this.workers;
+    this.game.workerPositions = this.workers.filter(w => w.state !== 'down');
   }
   approach(worker) { const c = CHAIRS[worker.chairId]; return { x: c.x, z: c.z + 1.15 }; }
   route(worker, target, returning = false) {
@@ -68,9 +69,38 @@ export class OfficeCoworkers {
       worker.yaw = worker.state === 'drinking' ? 0 : Math.atan2(-worker.x, -worker.z);
     }
   }
-  tick(dt, impacts = []) {
+  hit(workerId) {
+    const worker = this.workers.find(w => w.id === workerId);
+    if (!worker || worker.state === 'down') return;
+    worker.hitTimes = worker.hitTimes.filter(time => this.elapsed - time < 4);
+    worker.hitTimes.push(this.elapsed);
+    if (worker.hitTimes.length < worker.hitThreshold) return;
+    worker.state = 'down'; worker.deathAge = 0; worker.timer = 2.6;
+    worker.deathStyle = ['crumple', 'ragdoll', 'burst'][Math.floor(this.random() * 3)];
+    worker.saved = null; worker.path = []; this.syncChairs();
+  }
+  respawn(worker) {
+    let point;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = { x: (this.random() * 2 - 1) * 11.5, z: (this.random() * 2 - 1) * 8.5 };
+      if (this.game.canStand(candidate.x, candidate.z) && Math.hypot(candidate.x - this.game.x, candidate.z - this.game.z) > 1) { point = candidate; break; }
+    }
+    // A deterministic fallback also handles injected random sources and crowded layouts.
+    point ??= BREAK_SPOTS.find(p => this.game.canStand(p.x, p.z) && Math.hypot(p.x - this.game.x, p.z - this.game.z) > 1);
+    Object.assign(worker, { x: point.x, z: point.z, yaw: this.random() * Math.PI * 2, state: 'standing', timer: 2,
+      onBreak: false, returning: false, destination: null, reactionCooldown: 0, hitTimes: [],
+      hitThreshold: 2 + Math.floor(this.random() * 4), deathStyle: null, deathAge: 0 });
+  }
+  tick(dt, impacts = [], hits = []) {
     dt = Math.max(0, Math.min(dt, 0.05));
+    this.elapsed += dt;
+    for (const hit of hits) this.hit(hit.workerId);
     for (const worker of this.workers) {
+      if (worker.state === 'down') {
+        worker.deathAge += dt; worker.timer -= dt;
+        if (worker.timer <= 0) this.respawn(worker);
+        continue;
+      }
       worker.reactionCooldown = Math.max(0, worker.reactionCooldown - dt);
       const impact = impacts.find(p => Math.hypot(worker.x - p.x, worker.z - p.z) < 3);
       if (impact && !worker.reactionCooldown && worker.state !== 'reacting') {

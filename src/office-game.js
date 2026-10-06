@@ -24,7 +24,7 @@ export class OfficeGame {
     this.shift++; this.x = 0; this.z = 8; this.yaw = 0; this.pitch = 0;
     this.task = 0; this.progress = 0; this.elapsed = 0; this.complete = false;
     this.seated = null; this.standPoint = null; this.occupiedChairs = new Set(); this.workerPositions = [];
-    this.mugCooldown = 0; this.projectiles = []; this.nextMug = 0; this.impacts = [];
+    this.mugCooldown = 0; this.projectiles = []; this.nextMug = 0; this.impacts = []; this.hits = [];
     this.altitude = 0; this.verticalSpeed = 0; this.grounded = true; this.glideRemaining = 1; this.gliding = false;
   }
   get station() { return STATIONS[this.task] ?? null; }
@@ -71,15 +71,28 @@ export class OfficeGame {
     const dx = -Math.sin(this.yaw) * Math.cos(this.pitch), dy = Math.sin(this.pitch), dz = -Math.cos(this.yaw) * Math.cos(this.pitch);
     this.projectiles.push({ id: ++this.nextMug, x: this.x + dx * 0.6 + Math.cos(this.yaw) * 0.27,
       y: Math.max(1.28, this.eyeHeight - 0.2), z: this.z + dz * 0.6 - Math.sin(this.yaw) * 0.27,
-      vx: dx * 11, vy: dy * 11 + 1.7, vz: dz * 11, age: 0 });
+      vx: dx * 11, vy: dy * 11 + 1.7, vz: dz * 11, age: 0, hitWorkers: new Set() });
     this.projectiles = this.projectiles.slice(-12); this.mugCooldown = 0.5; return true;
   }
   stepMugs(dt) {
     this.mugCooldown = Math.max(0, this.mugCooldown - dt); if (this.mugCooldown < 1e-6) this.mugCooldown = 0;
-    this.impacts = [];
+    this.impacts = []; this.hits = [];
     for (const mug of this.projectiles) {
-      const oldY = mug.y; mug.age += dt; mug.vy -= 9.8 * dt;
+      const oldX = mug.x, oldZ = mug.z, oldY = mug.y; mug.age += dt; mug.vy -= 9.8 * dt;
       mug.x += mug.vx * dt; mug.y += mug.vy * dt; mug.z += mug.vz * dt;
+      // Swept body collision catches fast mugs between frames; each mug hits a coworker once.
+      for (const worker of this.workerPositions) {
+        if (mug.hitWorkers.has(worker.id)) continue;
+        const dx = mug.x - oldX, dz = mug.z - oldZ;
+        const t = Math.max(0, Math.min(1, ((worker.x - oldX) * dx + (worker.z - oldZ) * dz) / (dx * dx + dz * dz || 1)));
+        const y = oldY + (mug.y - oldY) * t;
+        const seated = this.occupiedChairs.has(worker.chairId);
+        if (y < 0.35 || y > (seated ? 1.85 : 2.1) || Math.hypot(oldX + dx * t - worker.x, oldZ + dz * t - worker.z) > 0.42) continue;
+        mug.hitWorkers.add(worker.id); this.hits.push({ workerId: worker.id, mugId: mug.id });
+        this.impacts.push({ x: worker.x, z: worker.z });
+        mug.vx *= -0.25; mug.vz *= -0.25; mug.vy = 1.5;
+        break;
+      }
       if (Math.abs(mug.x) > 12.7) { mug.x = Math.sign(mug.x) * 12.7; mug.vx *= -0.4; this.impacts.push({ x: mug.x, z: mug.z }); }
       if (Math.abs(mug.z) > 9.7) { mug.z = Math.sign(mug.z) * 9.7; mug.vz *= -0.4; this.impacts.push({ x: mug.x, z: mug.z }); }
       if (mug.y > 3.8) { mug.y = 3.8; mug.vy = -Math.abs(mug.vy) * 0.3; }
