@@ -33,6 +33,12 @@ A first-person office game with stickman bee coworkers, honeycomb archives, poll
 
 Furniture and walls block movement. Switching modes releases the mouse, and returning to an active office shift shows a Resume button. Both games remain entirely local, without saved progress or multiplayer.
 
+### Monitor videos
+
+Office monitors play randomized, original bee animation clips. They are CC0-dedicated procedural artwork generated in this repo, **silent**, **256×144**, **8 fps**, and **six seconds** each. All three together are about **78 KiB**. Six screens share three video decoders and pause their videos when the office is paused, hidden, or inactive.
+
+**Keep video assets small: at most 256 KiB per clip and 768 KiB total. Do not add big files or Git LFS.** Source, rights, and regeneration instructions are in [public/media/README.md](public/media/README.md). `npm run check:media` uses FFprobe to verify sizes, codecs, and the absence of audio tracks. Ordinary `npm test` needs only Node.js.
+
 ### Launch from VS Code
 
 After `npm ci`, open this repository in VS Code and press **F5** (or choose **The Hive: Play locally** in Run and Debug). The included `.vscode/launch.json` starts Vite on loopback and opens the game in your default browser. Press **Shift+F5** to stop it. If port 5173 is occupied, Vite chooses the next available port and opens that address automatically.

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OfficeGame, DESKS, STATIONS } from './office-game.js';
 import { GameSettings, viewBob } from './settings.js';
+import { createMonitorMedia } from './monitor-media.js';
 
 export function createOffice({ renderer, container, notify, settings = new GameSettings(), openSettings = () => {} }) {
   const game = new OfficeGame();
@@ -39,11 +40,12 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   }
   sign('CREATORHIVE // WORKER OPERATIONS', 0, 2.7, -9.87, 7);
   sign('MEETING COULD HAVE BEEN A BUZZ', 0, 2.8, 9.87, 6).rotation.y = Math.PI;
+  const monitors = [];
   for (const d of DESKS) {
     box(3.3, 0.12, 1.3, '#a99360', d.x, 0.98, d.z);
     for (const offset of [-1.35, 1.35]) box(0.1, 0.93, 1, '#202d25', d.x + offset, 0.46, d.z);
     box(1.1, 0.75, 0.1, '#16291f', d.x, 1.52, d.z - 0.23);
-    box(0.94, 0.58, 0.02, '#90c17a', d.x, 1.54, d.z - 0.17, scene, true);
+    monitors.push(box(0.94, 0.58, 0.02, '#90c17a', d.x, 1.54, d.z - 0.17, scene, true));
     box(0.1, 0.3, 0.1, '#18251c', d.x, 1.17, d.z - 0.23);
     box(0.85, 0.04, 0.3, '#314235', d.x, 1.06, d.z + 0.35);
     box(0.7, 0.15, 0.65, '#26372c', d.x, 0.55, d.z + 1.1);
@@ -53,6 +55,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
     box(3.3, 0.75, 0.09, '#547052', d.x, 1.35, d.z - 0.59);
     shape(new THREE.CylinderGeometry(0.1, 0.08, 0.2, 12), '#e1bd54', d.x + 0.9, 1.14, d.z + 0.2);
   }
+  const monitorMedia = createMonitorMedia(monitors);
   box(2.8, 1.05, 1.1, '#607b60', 9.5, 0.53, -8);
   box(1.2, 0.5, 0.7, '#c2c4a0', 9.5, 1.32, -8);
   box(0.85, 0.06, 0.4, '#ece4b1', 9.5, 1.59, -7.8);
@@ -115,7 +118,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   function captureMouse() { if (matchMedia('(pointer: coarse)').matches) return; try { const request = canvas.requestPointerLock(); request?.catch(() => notify('Mouse capture unavailable. Drag the game to look around.')); } catch { notify('Drag the game to look around.'); } }
   function setPaused(value) {
     paused = value; keys.clear(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume office simulation' : 'Pause office simulation');
-    if (paused) { unlock(); renderIntro('Shift paused.', 'Resume when you’re ready.', 'Resume'); } else { $('intro').hidden = true; captureMouse(); }
+    if (paused) { monitorMedia.pause(); unlock(); renderIntro('Shift paused.', 'Resume when you’re ready.', 'Resume'); } else { $('intro').hidden = true; monitorMedia.start(); captureMouse(); }
   }
   $('start').onclick = () => {
     if (game.complete) { game.reset(); started = false; }
@@ -135,6 +138,11 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) setPaused(!paused); if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (e.code === 'KeyF' && !e.repeat && !paused) { if (game.toggleSeat()) keys.clear(); } if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
   document.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); if (active && started && !paused && !game.complete) setPaused(true); });
+  document.addEventListener('visibilitychange', () => {
+    if (!active) return;
+    if (document.hidden) { monitorMedia.pause(); if (started && !paused && !game.complete) setPaused(true); }
+    else if (!started) monitorMedia.start();
+  });
   for (const button of root.querySelectorAll('[data-office-key]')) {
     button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.officeKey); });
     for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => keys.delete(button.dataset.officeKey));
@@ -149,7 +157,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
         sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), work: keys.has('KeyE'),
       });
       if (finished) { notify(game.complete ? 'Shift complete.' : 'Task complete.'); keys.delete('KeyE'); }
-      if (game.complete) { unlock(); renderIntro('Shift complete.', `4 tasks finished in ${Math.floor(game.elapsed / 60)}:${String(Math.floor(game.elapsed % 60)).padStart(2, '0')}.`, 'Next shift'); }
+      if (game.complete) { monitorMedia.pause(); unlock(); renderIntro('Shift complete.', `4 tasks finished in ${Math.floor(game.elapsed / 60)}:${String(Math.floor(game.elapsed % 60)).padStart(2, '0')}.`, 'Next shift'); }
     }
     const walked = Math.hypot(game.x - previousX, game.z - previousZ); walkDistance += walked;
     const bob = viewBob(walkDistance, settings.bobbing, walked > 0.001 && game.seated === null);
@@ -183,7 +191,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
     update,
     pause() { if (started && !game.complete) setPaused(true); },
     resize(width, height) { camera.aspect = width / height; camera.updateProjectionMatrix(); },
-    activate() { active = true; root.hidden = false; container.replaceChildren(root); if (started && !game.complete) setPaused(true); },
-    deactivate() { active = false; root.hidden = true; root.remove(); keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },
+    activate() { active = true; root.hidden = false; container.replaceChildren(root); if (started && !game.complete) setPaused(true); else if (!started) monitorMedia.start(); },
+    deactivate() { active = false; root.hidden = true; root.remove(); monitorMedia.stop(); keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },
   };
 }
