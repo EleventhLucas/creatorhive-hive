@@ -33,7 +33,7 @@ export class Game {
     const p = this.players.get(id);
     if (!p || !input || typeof input !== 'object') return;
     p.input = { x: Number.isFinite(input.x) ? clamp(input.x, -1, 1) : 0,
-      y: Number.isFinite(input.y) ? clamp(input.y, -1, 1) : 0,
+      y: 0,
       z: Number.isFinite(input.z) ? clamp(input.z, -1, 1) : 0, dash: input.dash === true };
     p.idle = 0;
   }
@@ -57,12 +57,12 @@ export class Game {
         if (d < 1 && p.bag < RULES.capacity && this.cooldowns[p.target] > 0) p.target = (p.target + 5) % FLOWERS.length;
       }
       const input = p.idle > 0.5 && !p.bot ? { x: 0, y: 0, z: 0, dash: false } : p.input;
-      const length = Math.max(1, Math.hypot(input.x, input.y, input.z));
+      const length = Math.max(1, Math.hypot(input.x, input.z));
       if (input.dash && p.boost === 0) p.boost = 4;
       const speed = (p.boost > 3.5 ? 13 : 6) * (p.bot ? 0.7 : 1);
       p.x += input.x / length * speed * dt;
       p.z += input.z / length * speed * dt;
-      p.y = clamp(p.y + input.y / length * speed * dt, 1.3, 6);
+      p.y = 2;
       const radius = Math.hypot(p.x, p.z);
       if (radius > RULES.radius) { p.x *= RULES.radius / radius; p.z *= RULES.radius / radius; }
       if (input.x || input.z) p.yaw = Math.atan2(input.x, input.z);

@@ -107,7 +107,7 @@ main { padding: 12px 12px 6px; }
 .masthead nav { gap: 16px; }
 
 }
-@media (max-width: 850px) {
+@media (max-width: 1000px) {
 .masthead { height: auto; min-height: 82px; padding-top: 10px; padding-bottom: 8px; grid-template-columns: 1fr auto; gap: 5px 12px; }
 .masthead .brand { grid-column: 1; grid-row: 1; }
 .masthead .global-settings { grid-column: 2; grid-row: 1; }
@@ -125,3 +125,6 @@ main { padding: 12px 12px 6px; }
 #world canvas { touch-action: none; }
 
 }
+
+.brand { min-width: 0; }
+.brand > span { overflow: hidden; text-overflow: ellipsis; }

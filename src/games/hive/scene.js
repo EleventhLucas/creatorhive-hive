@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Game, RULES, FLOWERS } from './simulation.js';
 import { markup } from './ui.js';
 import { GARDEN_PALETTE as palette } from './palette.js';
+import { OrbitView, bindOrbitControls } from './features/orbit-view.js';
 
 export function createHive({ renderer, container, notify: toast, openDialog: showModal, closeDialog = () => {} }) {
   const root = document.createElement('div'); root.id = 'garden-ui'; root.className = 'garden-ui'; root.innerHTML = markup;
@@ -13,12 +14,12 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
   $('sound').onclick = () => { soundEnabled = !soundEnabled; if (soundEnabled) { audio ??= new AudioContext(); audio.resume(); } $('sound').innerHTML = `♪ <span>Sound ${soundEnabled ? 'on' : 'off'}</span>`; $('sound').setAttribute('aria-pressed', soundEnabled); $('sound').setAttribute('aria-label', soundEnabled ? 'Disable sound' : 'Enable sound'); };
   function chime(frequency = 600) { if (!soundEnabled || !audio) return; const oscillator = audio.createOscillator(), gain = audio.createGain(); oscillator.connect(gain); gain.connect(audio.destination); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.04, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.18); oscillator.start(); oscillator.stop(audio.currentTime + 0.2); }
   $('start').onclick = () => { if (!renderer) return; game.reset(); game.round = 1; player = game.addPlayer(); started = true; $('intro').hidden = true; $('flight-hud').hidden = false; $('pause').disabled = false; $('phase').textContent = 'ACTIVE'; toast('Fly near flowers to collect. Return to the hive to deliver.'); };
-  function togglePause() { if (!started) return; paused = !paused; keys.clear(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume game' : 'Pause game'); $('phase').textContent = paused ? 'PAUSED' : 'ACTIVE'; toast(paused ? 'Paused. Press P to resume.' : 'Resumed.'); }
+  function togglePause() { if (!started) return; paused = !paused; keys.clear(); viewControls.cancel(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume game' : 'Pause game'); $('phase').textContent = paused ? 'PAUSED' : 'ACTIVE'; toast(paused ? 'Paused. Press P to resume.' : 'Resumed.'); }
   $('pause').onclick = togglePause;
   $('home').onclick = () => { toast('The glowing golden hive is in the center. Fly into its ring to deliver.'); hiveBeacon = 5; };
-  document.addEventListener('keydown', e => { if (!active || modal.open || !started) return; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.code === 'KeyP' && !e.repeat) togglePause(); keys.add(e.code); });
+  document.addEventListener('keydown', e => { if (!active || modal.open || !started) return; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.code === 'Space') return; if (e.code === 'KeyP' && !e.repeat) togglePause(); keys.add(e.code); });
   document.addEventListener('keyup', e => keys.delete(e.code));
-  window.addEventListener('blur', () => { keys.clear(); if (active && started && !paused) togglePause(); });
+  window.addEventListener('blur', () => { keys.clear(); viewControls.cancel(); if (active && started && !paused) togglePause(); });
   for (const button of root.querySelectorAll('[data-key]')) {
     button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.key); });
     for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => keys.delete(button.dataset.key));
@@ -29,7 +30,9 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
   scene.background = new THREE.Color(palette.sky);
   scene.fog = new THREE.Fog(palette.sky, 45, 95);
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 150);
-  camera.position.set(28, 32, 35); camera.lookAt(0, 0, 0);
+  const orbit = new OrbitView();
+  const viewControls = bindOrbitControls(renderer.domElement, orbit, () => active && !paused && !modal.open);
+  orbit.apply(camera, new THREE.Vector3());
   scene.add(new THREE.HemisphereLight('#fff4df', '#4b6151', 2.4));
   const sun = new THREE.DirectionalLight('#fff0c5', 3.2); sun.position.set(-12, 30, 15); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -25, right: 25, top: 25, bottom: -25, far: 70 }); sun.shadow.bias = -0.001; scene.add(sun);
   const materials = new Map();
@@ -130,8 +133,7 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
       if (player) {
         const up = Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown'));
         const right = Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft'));
-        const y = Number(keys.has('Space')) - Number(keys.has('ControlLeft') || keys.has('ControlRight') || keys.has('KeyC'));
-        game.setInput(player.id, modal.open ? { x: 0, y: 0, z: 0 } : { x: right * 0.78 - up * 0.63, z: -right * 0.63 - up * 0.78, y, dash: keys.has('ShiftLeft') || keys.has('ShiftRight') });
+        game.setInput(player.id, modal.open ? { x: 0, z: 0 } : { ...orbit.movement(up, right), dash: keys.has('ShiftLeft') || keys.has('ShiftRight') });
       }
       game.tick(dt);
       // Keep the landing screen's world alive without using up its first round.
@@ -148,7 +150,7 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
     beacon.rotation.y = elapsed * 0.6; beacon.position.y = 4.5 + Math.sin(elapsed * 2) * 0.15;
     hiveBeacon = Math.max(0, hiveBeacon - dt); hiveRing.scale.setScalar(1 + Math.sin(elapsed * 2) * (hiveBeacon ? 0.12 : 0.025));
     motes.rotation.y = Math.sin(elapsed * 0.07) * 0.1;
-    if (player) { const target = new THREE.Vector3(player.x * 0.17, 0, player.z * 0.17); camera.lookAt(target); }
+    orbit.apply(camera, new THREE.Vector3(player ? player.x * 0.17 : 0, 0, player ? player.z * 0.17 : 0));
     renderer.render(scene, camera);
     uiTime += dt; if (uiTime > 0.12) { updateUI(); uiTime = 0; }
   }
@@ -158,6 +160,6 @@ export function createHive({ renderer, container, notify: toast, openDialog: sho
     pause() { if (started && !paused) togglePause(); },
     resize(width, height) { camera.aspect = width / height; camera.updateProjectionMatrix(); },
     activate() { active = true; container.replaceChildren(root); renderer.domElement.setAttribute('aria-label', 'A floating garden with bees and a golden hive'); updateUI(); },
-    deactivate() { active = false; keys.clear(); root.remove(); },
+    deactivate() { active = false; keys.clear(); viewControls.cancel(); root.remove(); },
   };
 }

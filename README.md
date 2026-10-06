@@ -1,6 +1,6 @@
 # The Hive
 
-A local, single-player 3D bee game for CreatorHive's livestream. Fly through a floating hexagonal garden with natural grass, earth, and stone, colorful flowers, and honey-colored AI scouts, collect nectar from flowers, and return it to the golden hive. Six AI scouts contribute to a shared goal of 300 nectar in three minutes. Rounds restart automatically.
+Honey Retrieval is a local, single-player 3D bee game for CreatorHive's livestream. Fly through a floating hexagonal garden with natural grass, earth, and stone, colorful flowers, and honey-colored AI scouts, collect nectar from flowers, and return it to the golden hive. Six AI scouts contribute to a shared goal of 300 nectar in three minutes. Rounds restart automatically.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm run dev
 
 Open **http://127.0.0.1:5173**. Click **▶** to begin. The landing screen previews the AI garden.
 
-The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Hive** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating and its UI is removed from the page until you return.
+The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Honey Retrieval** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating and its UI is removed from the page until you return.
 
 ## Settings
 
@@ -69,12 +69,12 @@ npm start
 | Control | Action |
 | --- | --- |
 | WASD or arrow keys | Fly relative to the camera |
-| Space | Fly up |
-| Ctrl or C | Fly down |
+| Left click + drag | Rotate the garden view |
+| Scroll wheel | Zoom in / out |
 | Shift | Half-second boost, four-second cooldown |
 | P or pause button | Pause / resume |
 
-Touch devices show directional, altitude, and boost buttons. Nectar collects automatically when you fly close to a flower at its height. Your bag holds eight drops. Fly into the center hive's glowing ring below altitude 3.7 to deliver. Scouts are AI, visibly labeled throughout the interface. Audio is synthesized locally and off by default. Leaving the window pauses active play.
+Touch devices show directional and boost buttons; drag the garden to rotate the view. Nectar collects automatically when you fly close to a flower at its height. Your bag holds eight drops. Fly into the center hive's glowing ring to deliver. Bees fly at a fixed height; Space and Ctrl do not change altitude. Scouts are AI, visibly labeled throughout the interface. Audio is synthesized locally and off by default. Leaving the window pauses active play.
 
 ## Privacy and scope
 

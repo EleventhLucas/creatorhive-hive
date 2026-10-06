@@ -15,7 +15,7 @@ test('movement bounds, stale inputs, and invalid numeric inputs cannot corrupt t
   game.setInput(bee.id, { x: Infinity, y: NaN, z: '100' }); game.tick(0.1);
   assert.equal(bee.y, 2); assert.ok(Number.isFinite(bee.x));
   for (let i = 0; i < 150; i++) { game.setInput(bee.id, { x: 1, y: 1, z: 1 }); game.tick(0.1); }
-  assert.ok(Math.hypot(bee.x, bee.z) <= RULES.radius + 0.0001); assert.ok(bee.y <= 6);
+  assert.ok(Math.hypot(bee.x, bee.z) <= RULES.radius + 0.0001); assert.equal(bee.y, 2);
   for (let i = 0; i < 8; i++) game.tick(0.1);
   const x = bee.x; game.tick(0.1); assert.equal(bee.x, x);
 });
