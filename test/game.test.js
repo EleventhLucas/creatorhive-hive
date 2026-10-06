@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, RULES, FLOWERS } from '../src/game.js';
+import { Game, RULES, FLOWERS } from '../src/games/hive/simulation.js';
 
 test('nectar collects at flowers, caps at eight, and scores only at the hive', () => {
   const game = new Game({ bots: 0 }); const bee = game.addPlayer();

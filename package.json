@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
+    "build": "npm run check:modules && vite build",
     "start": "vite preview --host 127.0.0.1",
     "test": "node --test",
-    "check:media": "node tools/check-media.mjs"
+    "check:media": "node tools/check-media.mjs",
+    "check:modules": "node tools/check-modules.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

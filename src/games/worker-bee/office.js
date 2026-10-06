@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { OfficeGame, DESKS, STATIONS } from './office-game.js';
+import { OfficeGame, DESKS, STATIONS } from './simulation.js';
 import { GameSettings, viewBob } from './settings.js';
-import { createMonitorMedia } from './monitor-media.js';
-import { OfficeCoworkers } from './office-npcs.js';
+import { createMonitorMedia } from './media.js';
+import { OfficeCoworkers } from './npcs.js';
 
 export function createOffice({ renderer, container, notify, settings, openDialog = () => {}, random = Math.random }) {
   settings ??= new GameSettings({ reducedMotion: typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches });

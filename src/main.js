@@ -1,235 +1,51 @@
 import * as THREE from 'three';
-import { Game, RULES, FLOWERS } from './game.js';
-import { createOffice } from './office.js';
+import { createGameHost } from './game-host.js';
+import { openDisplaySettings } from './display-settings.js';
 import './style.css';
 
+// Folder discovery lets contributors add a game without editing this shell.
+const modules = import.meta.glob('./games/*/index.js', { eager: true, import: 'game' });
+import.meta.glob('./games/*/style.css', { eager: true });
+const games = Object.values(modules).sort((a, b) => a.order - b.order);
 const hexIcon = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 2 12 7v14l-12 7-12-7V9Z" stroke="currentColor" stroke-width="2"/><path d="M11 10h10v3H11zm-2 6h14v3H9zm2 6h10v3H11Z" fill="currentColor"/></svg>';
 document.querySelector('#app').innerHTML = `
-  <header class="masthead"><a class="brand" href="/">${hexIcon}<span>The CreatorHive... Hive</span></a>
-    <nav aria-label="Game modes"><button id="garden-tab" aria-pressed="true">Hive</button><button id="office-tab" aria-pressed="false">Worker Bee Sim</button></nav><button id="settings-button" class="global-settings" aria-label="Global settings" title="Global settings">⚙</button>
-  </header>
-  <main>
-      <section class="arena" aria-label="3D hive game">
-        <div id="world"></div>
-        <div id="game-ui" class="mode-ui"><div id="garden-ui" class="garden-ui">
-        <div class="arena-top garden-only">
-          <div class="world-title"><span class="live-dot"></span> GARDEN_01<small>ROUND <span id="round">01</span></small></div>
-          <div class="mission-status"><div><span>HIVE</span><strong id="honey">0</strong><span>/ 300</span><span id="percent">0%</span></div><div class="progress-track"><i id="honey-progress"></i></div></div>
-          <div class="round-clock"><span id="phase">READY</span><strong id="timer">3:00</strong></div>
-          <div class="arena-actions"><button id="sound" title="Toggle sound" aria-label="Enable sound" aria-pressed="false">♪ <span>Sound off</span></button><button id="pause" title="Pause game" aria-label="Pause game" disabled>Ⅱ</button></div>
-        </div>
-        <div class="scene-label garden-only">HIVE<span>nectar drop-off</span></div>
-        <div class="intro garden-only" id="intro"><div><h1>Collect. Return. Repeat.</h1><p>300 nectar. 3 minutes. You + 6 AI scouts.</p></div><button id="start" class="primary">Start flight <span>↗</span></button></div>
-        <div class="flight-hud garden-only" id="flight-hud" hidden><div><span>YOUR NECTAR</span><div id="bag" class="bag"></div></div><div class="boost"><span id="boost-label">BOOST READY</span><div><i id="boost-meter"></i></div></div><button id="home" title="Point to hive">⌂ <span>Return to hive</span></button></div>
-        <div class="mobile-controls garden-only" id="touch-controls"><div class="dpad"><button data-key="KeyW" aria-label="Fly forward">↑</button><button data-key="KeyA" aria-label="Fly left">←</button><button data-key="KeyS" aria-label="Fly backward">↓</button><button data-key="KeyD" aria-label="Fly right">→</button></div><div><button data-key="Space" aria-label="Fly up">↥</button><button data-key="ControlLeft" aria-label="Fly down">↧</button><button data-key="ShiftLeft">Boost</button></div></div>
-        </div></div>
-        <div id="toast" class="toast" role="status" aria-live="polite"></div>
-      </section>
-    <section id="controls" class="controls" aria-label="Game controls"><span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> move</span><span><kbd>SPACE</kbd> / <kbd>CTRL</kbd> altitude</span><span><kbd>SHIFT</kbd> boost</span><span><kbd>P</kbd> pause</span></section>
-  </main>
+  <header class="masthead"><a class="brand" href="/">${hexIcon}<span>The CreatorHive... Hive... The Game!</span></a>
+    <nav aria-label="Games"></nav><button id="settings-button" class="global-settings" aria-label="Global settings" title="Global settings">⚙</button></header>
+  <main><section class="arena"><div id="world"></div><div id="game-ui" class="mode-ui"></div><div id="toast" class="toast" role="status" aria-live="polite"></div></section><section id="controls" class="controls" aria-label="Game controls"></section></main>
   <dialog id="modal"><button id="close-modal" aria-label="Close dialog">×</button><div id="modal-content"></div></dialog>`;
-
 const $ = id => document.getElementById(id);
-const game = new Game();
-let player = null, started = false, paused = false, soundEnabled = false, audio;
-let mode = 'garden', office;
-const keys = new Set();
 const modal = $('modal');
-const showModal = html => { $('modal-content').innerHTML = html; modal.showModal(); };
-$('close-modal').onclick = () => modal.close();
-modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
-function openSettings() {
-  keys.clear();
-  if (mode === 'office') office?.pause();
-  else if (started && !paused) togglePause();
-  showModal(`<p class="eyebrow">GLOBAL</p><h2>Display settings</h2><div class="settings-row"><button id="fullscreen-button" class="primary">⛶ ${document.fullscreenElement ? 'Exit' : 'Enter'} fullscreen</button></div><div class="settings-row"><label for="theme-choice">Appearance <select id="theme-choice"><option value="dark">Dark</option><option value="light">Light</option></select></label></div><div class="settings-row"><label for="accent-color">Accent color <input id="accent-color" type="color" value="${document.documentElement.style.getPropertyValue('--accent') || '#f1ce50'}"/></label><div class="palette-options">${[['#f1ce50','Honey'],['#a3e88b','Green'],['#74d9e6','Cyan'],['#ee9ab4','Pink']].map(([color,label]) => `<button data-accent="${color}" aria-label="${label} accent" title="${label}" style="background:${color}"></button>`).join('')}</div></div><div class="settings-row"><label for="compact-ui">Compact interface <input id="compact-ui" type="checkbox" ${document.body.classList.contains('compact-ui') ? 'checked' : ''}/></label></div>`);
-  $('fullscreen-button').disabled = !document.fullscreenEnabled;
-  $('fullscreen-button').onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); modal.close(); } catch { toast('Fullscreen unavailable in this browser.'); } };
-  $('compact-ui').onchange = e => document.body.classList.toggle('compact-ui', e.target.checked);
-  $('theme-choice').value = document.documentElement.dataset.theme || 'dark';
-  $('theme-choice').onchange = e => { document.documentElement.dataset.theme = e.target.value; };
-  const setAccent = color => { document.documentElement.style.setProperty('--accent', color); $('accent-color').value = color; };
-  $('accent-color').oninput = e => setAccent(e.target.value);
-  document.querySelectorAll('[data-accent]').forEach(button => { button.onclick = () => setAccent(button.dataset.accent); });
-}
-$('settings-button').onclick = openSettings;
-$('sound').onclick = () => { soundEnabled = !soundEnabled; if (soundEnabled) { audio ??= new AudioContext(); audio.resume(); } $('sound').innerHTML = `♪ <span>Sound ${soundEnabled ? 'on' : 'off'}</span>`; $('sound').setAttribute('aria-pressed', soundEnabled); $('sound').setAttribute('aria-label', soundEnabled ? 'Disable sound' : 'Enable sound'); };
-function chime(frequency = 600) { if (!soundEnabled || !audio) return; const oscillator = audio.createOscillator(), gain = audio.createGain(); oscillator.connect(gain); gain.connect(audio.destination); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(0.04, audio.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.18); oscillator.start(); oscillator.stop(audio.currentTime + 0.2); }
+const openDialog = html => { $('modal-content').innerHTML = html; if (!modal.open) modal.showModal(); };
+const closeDialog = () => modal.close();
+$('close-modal').onclick = closeDialog;
+modal.addEventListener('click', event => { if (event.target === modal) closeDialog(); });
 let toastTimer;
-function toast(message) { $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 2600); }
-$('start').onclick = () => { if (!renderer) return; game.reset(); game.round = 1; player = game.addPlayer(); started = true; $('intro').hidden = true; $('flight-hud').hidden = false; $('pause').disabled = false; $('phase').textContent = 'ACTIVE'; toast('Fly near flowers to collect. Return to the hive to deliver.'); };
-function togglePause() { if (!started) return; paused = !paused; keys.clear(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume game' : 'Pause game'); $('phase').textContent = paused ? 'PAUSED' : 'ACTIVE'; toast(paused ? 'Paused. Press P to resume.' : 'Resumed.'); }
-$('pause').onclick = togglePause;
-$('home').onclick = () => { toast('The glowing golden hive is in the center. Fly into its ring to deliver.'); hiveBeacon = 5; };
-document.addEventListener('keydown', e => { if (mode !== 'garden' || modal.open || !started) return; if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.code === 'KeyP' && !e.repeat) togglePause(); keys.add(e.code); });
-document.addEventListener('keyup', e => keys.delete(e.code));
-window.addEventListener('blur', () => { keys.clear(); if (mode === 'garden' && started && !paused) togglePause(); });
-for (const button of document.querySelectorAll('[data-key]')) {
-  button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.key); });
-  for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => keys.delete(button.dataset.key));
+function notify(message) {
+  $('toast').textContent = message; $('toast').classList.add('visible'); clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 2600);
 }
-
-// All artwork is procedural. No remote models, textures, fonts, or services.
-const scene = new THREE.Scene();
-scene.background = new THREE.Color('#101c17');
-scene.fog = new THREE.Fog('#101c17', 45, 95);
-const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 150);
-camera.position.set(28, 32, 35); camera.lookAt(0, 0, 0);
-let renderer;
+let renderer, host;
 try {
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.25;
   $('world').appendChild(renderer.domElement);
-  renderer.domElement.setAttribute('aria-label', 'A floating hexagonal garden with a golden hive, flowers, and flying bees');
-  renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); if (mode === 'garden' && started && !paused) togglePause(); toast('Graphics paused. Refresh to restore the game.'); });
-} catch { $('intro').innerHTML = '<div><h2>Your garden needs WebGL 2.</h2><p>Try a browser with hardware acceleration enabled.</p></div>'; }
-scene.add(new THREE.HemisphereLight('#d9f4da', '#223e30', 2.4));
-const sun = new THREE.DirectionalLight('#fff0c5', 3.2); sun.position.set(-12, 30, 15); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -25, right: 25, top: 25, bottom: -25, far: 70 }); sun.shadow.bias = -0.001; scene.add(sun);
-const materials = new Map();
-function material(color, extra = {}) { const key = color + JSON.stringify(extra); if (!materials.has(key)) materials.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra })); return materials.get(key); }
-function mesh(geometry, color, parent = scene, x = 0, y = 0, z = 0, extra = {}) { const m = new THREE.Mesh(geometry, material(color, extra)); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; }
-const cylinder = (rt, rb, h, segments = 6) => new THREE.CylinderGeometry(rt, rb, h, segments);
-const sphere = new THREE.SphereGeometry(1, 16, 12);
-function orb(parent, color, x, y, z, sx, sy = sx, sz = sx, extra) { const m = mesh(sphere, color, parent, x, y, z, extra); m.scale.set(sx, sy, sz); return m; }
-// Seeded randomness keeps the garden stable across visits.
-let seed = 47;
-function random() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
-const island = new THREE.Group(); scene.add(island);
-const tileGeometry = cylinder(1.7, 1.55, 0.75);
-const greens = ['#344e3d', '#3c5945', '#43614c', '#2e4739', '#47684d'];
-for (let q = -7; q <= 7; q++) for (let r = -7; r <= 7; r++) {
-  const x = Math.sqrt(3) * 1.7 * (q + r / 2), z = 2.55 * r;
-  if (Math.hypot(x, z) > 18.8) continue;
-  mesh(tileGeometry, greens[Math.floor(random() * greens.length)], island, x, -0.35 + random() * 0.07, z);
-  if (Math.hypot(x, z) > 16) mesh(cylinder(1.52, 0.8, 3 + random() * 2), '#59634b', island, x, -2.5, z);
+  host = createGameHost({ games, renderer, container: $('game-ui'), controls: $('controls'), navigation: document.querySelector('nav'), arena: document.querySelector('.arena'), notify, openDialog, closeDialog, clearNotification: () => { clearTimeout(toastTimer); $('toast').classList.remove('visible'); } });
+  renderer.domElement.addEventListener('webglcontextlost', event => { event.preventDefault(); host.pause(); notify('Graphics paused. Refresh to restore the game.'); });
+  host.select(games[0].id);
+} catch (error) {
+  console.error(error);
+  $('game-ui').innerHTML = '<div class="intro"><div><h2>WebGL 2 required.</h2><p>Enable hardware acceleration to play.</p></div></div>';
 }
-mesh(cylinder(17.8, 12, 5, 6), '#586348', island, 0, -3.2, 0);
-mesh(cylinder(12, 3, 5, 6), '#46543f', island, 0, -7.2, 0);
-const ground = mesh(new THREE.PlaneGeometry(200, 200), '#101c17', scene, 0, -13, 0); ground.rotation.x = -Math.PI / 2; ground.castShadow = false;
-const grid = new THREE.GridHelper(140, 56, '#2c4736', '#22392d'); grid.position.y = -12.98; grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
-// Grass blades are instanced to keep the scene light on the GPU.
-const grass = new THREE.InstancedMesh(new THREE.ConeGeometry(0.065, 0.55, 3), material('#607a48'), 550);
-const dummy = new THREE.Object3D();
-for (let i = 0; i < 550; i++) { const a = random() * Math.PI * 2, r = 4 + random() * 13; dummy.position.set(Math.cos(a) * r, 0.27, Math.sin(a) * r); dummy.rotation.set(random() * 0.2, a, random() * 0.3); dummy.scale.setScalar(0.7 + random()); dummy.updateMatrix(); grass.setMatrixAt(i, dummy.matrix); } scene.add(grass);
-const hive = new THREE.Group(); scene.add(hive);
-mesh(cylinder(3, 3.4, 0.3), '#cfac5c', hive, 0, 0.15, 0);
-for (let i = 0; i < 5; i++) mesh(cylinder(2.1 - i * 0.27, 2.2 - i * 0.27, 0.65, 12), i % 2 ? '#dba537' : '#edbb4f', hive, 0, 0.6 + i * 0.6, 0);
-orb(hive, '#f9d779', 0, 3.6, 0, 0.65, 0.35, 0.65);
-orb(hive, '#3a3020', 1.2, 0.85, 1.25, 0.5, 0.6, 0.15).rotation.y = Math.PI / 4;
-const hiveRing = mesh(new THREE.TorusGeometry(3.2, 0.05, 8, 64), '#fff2a3', hive, 0, 0.22, 0, { emissive: '#f1cb5e', emissiveIntensity: 0.5 }); hiveRing.rotation.x = -Math.PI / 2;
-const beacon = mesh(new THREE.OctahedronGeometry(0.32), '#ffe49c', hive, 0, 4.8, 0, { emissive: '#f9c75d', emissiveIntensity: 0.8 });
-let hiveBeacon = 0;
-const flowerModels = [];
-const petals = ['#e9a99a', '#eedbaa', '#c4b2d4', '#e3bf58', '#ddd6b4', '#edbaba'];
-for (const f of FLOWERS) {
-  const group = new THREE.Group(); group.position.set(f.x, 0, f.z); scene.add(group);
-  mesh(cylinder(0.07, 0.09, 1.5, 5), '#597345', group, 0, 0.75, 0);
-  const leaf = orb(group, '#6f884f', 0.25, 0.75, 0, 0.4, 0.06, 0.17); leaf.rotation.z = 0.4;
-  for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; const p = orb(group, petals[f.id % petals.length], Math.cos(a) * 0.48, 1.6, Math.sin(a) * 0.48, 0.43, 0.14, 0.28); p.rotation.y = -a; }
-  orb(group, '#f8cc58', 0, 1.65, 0, 0.32, 0.18, 0.32);
-  const nectar = mesh(new THREE.OctahedronGeometry(0.14), '#fff4bb', group, 0, 2.3, 0, { emissive: '#ffe69a', emissiveIntensity: 0.6 });
-  flowerModels.push({ group, nectar });
-}
-for (let i = 0; i < 12; i++) {
-  const a = i * Math.PI * 2 / 12 + 0.12, r = 16 + random(); const tree = new THREE.Group(); tree.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(tree);
-  const h = 1.8 + random() * 1.7; mesh(cylinder(0.15, 0.22, h, 6), '#786248', tree, 0, h / 2, 0);
-  orb(tree, '#647e4e', 0, h + 0.6, 0, 0.9, 1.2, 0.9); orb(tree, '#7b925c', 0.35, h + 1.25, 0, 0.75, 0.8, 0.75);
-}
-for (let i = 0; i < 26; i++) { const a = random() * Math.PI * 2, r = 15 + random() * 3; const rock = mesh(new THREE.DodecahedronGeometry(0.25 + random() * 0.4), '#acb19a', scene, Math.cos(a) * r, 0.15, Math.sin(a) * r); rock.scale.y = 0.6; }
-const motesGeometry = new THREE.BufferGeometry(); const motePositions = new Float32Array(90 * 3);
-for (let i = 0; i < 90; i++) { motePositions[i * 3] = (random() - 0.5) * 38; motePositions[i * 3 + 1] = 1 + random() * 7; motePositions[i * 3 + 2] = (random() - 0.5) * 38; }
-motesGeometry.setAttribute('position', new THREE.BufferAttribute(motePositions, 3)); const motes = new THREE.Points(motesGeometry, new THREE.PointsMaterial({ color: '#fff2c0', size: 0.07, transparent: true, opacity: 0.8 })); scene.add(motes);
-const beeModels = new Map();
-function createBee(p) {
-  const group = new THREE.Group(); scene.add(group);
-  const body = new THREE.Group(); group.add(body);
-  orb(body, p.bot ? '#dabb64' : '#ffd052', 0, 0, 0, 0.32, 0.3, 0.52);
-  for (const z of [-0.2, 0.12]) { const band = mesh(cylinder(0.305, 0.305, 0.13, 16), '#38362a', body, 0, 0, z); band.rotation.x = Math.PI / 2; }
-  orb(body, '#37372b', 0, 0.04, 0.44, 0.29, 0.27, 0.23);
-  for (const x of [-0.13, 0.13]) { orb(body, '#fff7d7', x, 0.13, 0.61, 0.07); orb(body, '#242c21', x, 0.13, 0.66, 0.035); const antenna = mesh(cylinder(0.015, 0.02, 0.24, 5), '#37372b', body, x, 0.36, 0.47); antenna.rotation.z = x * -3; }
-  const wings = [];
-  for (const side of [-1, 1]) { const wing = orb(body, '#fff8e4', side * 0.36, 0.22, -0.06, 0.4, 0.035, 0.22, { transparent: true, opacity: 0.65, roughness: 0.3 }); wings.push(wing); }
-  const shadow = mesh(new THREE.CircleGeometry(p.bot ? 0.35 : 0.5, 24), p.bot ? '#657451' : '#f9d260', scene, 0, 0.08, 0, { transparent: true, opacity: 0.4 }); shadow.rotation.x = -Math.PI / 2; shadow.castShadow = false;
-  const labelCanvas = document.createElement('canvas'); labelCanvas.width = 256; labelCanvas.height = 64;
-  const ctx = labelCanvas.getContext('2d'); ctx.font = `600 ${p.bot ? 23 : 27}px monospace`; ctx.textAlign = 'center'; ctx.fillStyle = p.bot ? '#c2ddad' : '#fff8df';
-  if (!p.bot) { ctx.fillStyle = '#101e14'; ctx.beginPath(); ctx.roundRect(50, 6, 156, 48, 4); ctx.fill(); ctx.fillStyle = '#b9f396'; }
-  ctx.fillText(p.bot ? p.name : 'YOU', 128, 39);
-  const labelTexture = new THREE.CanvasTexture(labelCanvas); const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTexture, depthTest: false })); label.position.y = 1.1; label.scale.set(2.5, 0.625, 1); group.add(label);
-  group.position.set(p.x, p.y, p.z);
-  beeModels.set(p.id, { group, body, wings, shadow, labelTexture });
-}
-function resize() { if (!renderer) return; const { width, height } = $('world').getBoundingClientRect(); renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix(); office?.resize(width, height); }
-new ResizeObserver(resize).observe($('world'));
-let lastBag = 0, lastScore = 0, lastResult = null, lastRound = 1, uiTime = 0;
-function updateUI() {
-  const seconds = Math.max(0, Math.ceil(game.remaining)); $('timer').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-  $('round').textContent = String(game.round).padStart(2, '0'); $('honey').textContent = game.honey;
-  const percent = Math.min(100, Math.floor(game.honey / RULES.goal * 100)); $('honey-progress').style.width = `${percent}%`; $('percent').textContent = `${percent}%`;
-  if (player) {
-    $('bag').innerHTML = Array.from({ length: RULES.capacity }, (_, i) => `<i class="${i < player.bag ? 'filled' : ''}"></i>`).join('') + `<strong>${player.bag}<span> / 8</span></strong>`;
-    $('boost-label').textContent = player.boost ? `BOOST IN ${Math.ceil(player.boost)}s` : 'BOOST READY'; $('boost-meter').style.width = `${(1 - player.boost / 4) * 100}%`;
-    if (player.score > lastScore) { toast(`+${player.score - lastScore} nectar delivered.`); chime(880); }
-    else if (player.bag > lastBag) { chime(500 + player.bag * 55); if (player.bag === RULES.capacity) toast('Nectar bag full! Head back to the golden hive.'); }
-    lastBag = player.bag; lastScore = player.score;
-  }
-  if (started && game.result && game.result !== lastResult) {
-    $('phase').textContent = 'RESETTING';
-    showModal(`<p class="eyebrow">ROUND ${game.round}</p><h2>${game.result === 'complete' ? 'Goal reached.' : 'Time expired.'}</h2><p>Hive: <strong>${game.honey} / 300 nectar</strong><br>Your contribution: <strong>${player.score}</strong></p><p class="result-note">Next round in 12 seconds.</p>`); chime(1046);
-  }
-  if (game.round !== lastRound) { modal.close(); $('phase').textContent = 'ACTIVE'; toast('New round.'); lastScore = 0; lastBag = 0; }
-  lastResult = game.result; lastRound = game.round;
-}
-const clock = new THREE.Clock();
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05), elapsed = clock.elapsedTime;
+$('settings-button').onclick = () => openDisplaySettings({ openDialog, notify, pause: () => host?.pause() });
+function resize() {
   if (!renderer) return;
-  if (mode === 'office') { office.update(dt, elapsed); return; }
-  if (!paused) {
-    if (player) {
-      const up = Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown'));
-      const right = Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft'));
-      const y = Number(keys.has('Space')) - Number(keys.has('ControlLeft') || keys.has('ControlRight') || keys.has('KeyC'));
-      game.setInput(player.id, modal.open ? { x: 0, y: 0, z: 0 } : { x: right * 0.78 - up * 0.63, z: -right * 0.63 - up * 0.78, y, dash: keys.has('ShiftLeft') || keys.has('ShiftRight') });
-    }
-    game.tick(dt);
-    // Keep the landing screen's world alive without using up its first round.
-    if (!started) { game.remaining = RULES.duration; if (game.result) game.reset(); }
-  }
-  for (const p of game.players.values()) {
-    if (!beeModels.has(p.id)) createBee(p);
-    const bee = beeModels.get(p.id);
-    bee.group.position.lerp(new THREE.Vector3(p.x, p.y + Math.sin(elapsed * 7 + p.id) * 0.06, p.z), 1 - Math.exp(-dt * 15));
-    const angle = Math.atan2(Math.sin(p.yaw - bee.body.rotation.y), Math.cos(p.yaw - bee.body.rotation.y)); bee.body.rotation.y += angle * Math.min(1, dt * 12);
-    bee.wings.forEach((w, i) => { w.rotation.z = Math.sin(elapsed * 75) * 0.45 * (i ? 1 : -1); }); bee.shadow.position.set(p.x, 0.07, p.z);
-  }
-  for (const [i, f] of flowerModels.entries()) { f.nectar.position.y = 2.25 + Math.sin(elapsed * 2 + i) * 0.15; f.nectar.rotation.y = elapsed; f.nectar.visible = !game.cooldowns[i]; }
-  beacon.rotation.y = elapsed * 0.6; beacon.position.y = 4.5 + Math.sin(elapsed * 2) * 0.15;
-  hiveBeacon = Math.max(0, hiveBeacon - dt); hiveRing.scale.setScalar(1 + Math.sin(elapsed * 2) * (hiveBeacon ? 0.12 : 0.025));
-  motes.rotation.y = Math.sin(elapsed * 0.07) * 0.1;
-  if (player) { const target = new THREE.Vector3(player.x * 0.17, 0, player.z * 0.17); camera.lookAt(target); }
-  renderer.render(scene, camera);
-  uiTime += dt; if (uiTime > 0.12) { updateUI(); uiTime = 0; }
+  const { width, height } = $('world').getBoundingClientRect();
+  if (!width || !height) return;
+  renderer.setSize(width, height); host?.resize(width, height);
 }
-const gardenUI = $('garden-ui');
-if (renderer) office = createOffice({ renderer, container: $('game-ui'), notify: toast, openDialog: showModal });
-const gardenControls = $('controls').innerHTML;
-function switchMode(next) {
-  if (next === mode) return;
-  if (!office) { showModal('<h2>WebGL 2 required.</h2><p>Enable hardware acceleration to play.</p>'); return; }
-  keys.clear(); modal.close(); $('toast').classList.remove('visible');
-  mode = next;
-  document.querySelector('.arena').setAttribute('aria-label', next === 'office' ? 'Worker Bee Sim first-person office game' : '3D hive game');
-  $('garden-tab').setAttribute('aria-pressed', next === 'garden'); $('office-tab').setAttribute('aria-pressed', next === 'office');
-  renderer.domElement.setAttribute('aria-label', next === 'office' ? 'A bee office with desks, stickman bee coworkers, and task stations' : 'A floating garden with bees and a golden hive');
-  if (next === 'office') {
-    office.activate();
-    $('controls').innerHTML = '<span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> walk</span><span><kbd>MOUSE</kbd> look</span><span><kbd>SHIFT</kbd> sprint</span><span><kbd>SPACE</kbd> jump / glide</span><span><kbd>E</kbd> work</span><span><kbd>F</kbd> sit / stand</span><span><kbd>LMB</kbd> throw mug</span><span><kbd>ESC</kbd> / <kbd>P</kbd> pause</span>';
-  } else { office.deactivate(); $('game-ui').replaceChildren(gardenUI); $('controls').innerHTML = gardenControls; }
-  resize();
-}
-$('garden-tab').onclick = () => switchMode('garden');
-$('office-tab').onclick = () => switchMode('office');
-resize(); updateUI(); animate();
+new ResizeObserver(resize).observe($('world')); resize();
+const clock = new THREE.Clock();
+function animate() { requestAnimationFrame(animate); const dt = Math.min(clock.getDelta(), 0.05); host?.update(dt, clock.elapsedTime); }
+animate();

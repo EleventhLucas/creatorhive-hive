@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Window } from 'happy-dom';
-import { createOffice } from '../src/office.js';
-import { GameSettings } from '../src/settings.js';
+import { createOffice } from '../src/games/worker-bee/office.js';
+import { GameSettings } from '../src/games/worker-bee/settings.js';
 
 test('office input drives FOV, mug throwing/refill, chair sitting, and pause without leaking into another mode', () => {
   const browserWindow = new Window();

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OfficeGame, STATIONS, OFFICE_BOUNDS, CHAIRS } from '../src/office-game.js';
+import { OfficeGame, STATIONS, OFFICE_BOUNDS, CHAIRS } from '../src/games/worker-bee/simulation.js';
 
 test('office walking stops at desks and room boundaries', () => {
   const game = new OfficeGame(); game.x = -7; game.z = -3;

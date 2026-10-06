@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { statSync } from 'node:fs';
-import { MONITOR_CLIPS } from '../src/monitor-media.js';
+import { MONITOR_CLIPS } from '../src/games/worker-bee/media.js';
 
 let total = 0;
 for (const name of MONITOR_CLIPS) {

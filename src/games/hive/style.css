@@ -1,0 +1,62 @@
+.garden-ui .arena-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 28px; padding: 16px 20px; background: linear-gradient(var(--panel-glass), transparent); }
+.garden-ui .mission-status { width: 190px; margin-left: auto; }
+.garden-ui .mission-status > div:first-child { display: flex; align-items: baseline; gap: 8px; font-size: 10px; color: var(--muted); }
+.garden-ui .mission-status strong { font-size: 19px; font-weight: 500; color: var(--green); }
+.garden-ui #percent { margin-left: auto; font-size: 9px; }
+.garden-ui .round-clock { text-align: right; min-width: 86px; }
+.garden-ui .round-clock > span { display: block; color: var(--muted); font-size: 8px; letter-spacing: .7px; }
+.garden-ui .round-clock strong { font-size: 25px; font-weight: 400; line-height: 1.4; color: var(--text); font-variant-numeric: tabular-nums; }
+.garden-ui .arena-actions { display: flex; gap: 7px; }
+.garden-ui .arena-actions button { min-width: 34px; height: 32px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-size: 16px; }
+.garden-ui .arena-actions button:hover:not(:disabled) { border-color: var(--green); }
+.garden-ui .arena-actions button span { font-size: 9px; margin: 0 6px; }
+.garden-ui .scene-label { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); color: #d4db99; text-align: center; font-size: 9px; letter-spacing: 2px; pointer-events: none; text-shadow: 0 1px 6px #0b160b; }
+.garden-ui .scene-label span { display: block; margin-top: 6px; color: #a3b29a; font-size: 8px; letter-spacing: .4px; }
+.garden-ui .flight-hud { position: absolute; bottom: 20px; left: 20px; right: 20px; max-width: 560px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px 18px; background: var(--panel-glass); border: 1px solid var(--line); border-radius: 3px; backdrop-filter: blur(12px); }
+.garden-ui .flight-hud > div > span { display: block; color: var(--muted); font-size: 8px; letter-spacing: 1px; margin-bottom: 7px; }
+.garden-ui .bag { display: flex; gap: 4px; align-items: center; }
+.garden-ui .bag i { width: 12px; height: 14px; background: #334636; clip-path: polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); }
+.garden-ui .bag i.filled { background: #dfc068; }
+.garden-ui .bag strong { font-size: 12px; font-weight: 500; margin-left: 7px; color: #dfc068; }
+.garden-ui .bag strong span { color: var(--muted); font-size: 10px; }
+.garden-ui .boost { width: 100px; }
+.garden-ui .boost > div { height: 3px; overflow: hidden; background: #334636; }
+.garden-ui .boost i { display: block; width: 100%; height: 100%; background: var(--green); }
+.garden-ui .flight-hud button { display: flex; align-items: center; gap: 8px; background: none; border: 0; font-size: 21px; color: var(--green); }
+.garden-ui .flight-hud button span { font-size: 9px; color: #aac09f; }
+.garden-ui .mobile-controls { display: none; }
+@media (max-width: 760px) {
+.garden-ui .arena-top { padding: 13px; gap: 16px; flex-wrap: wrap; }
+.garden-ui .mission-status { width: 140px; }
+.garden-ui .arena-actions button span { display: none; }
+
+}
+@media (max-width: 480px) {
+.garden-ui .arena-top { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 10px 14px; }
+.garden-ui .mission-status { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+.garden-ui .mission-status > div:first-child { gap: 5px; font-size: 8px; }
+.garden-ui .mission-status strong { font-size: 16px; }
+.garden-ui .round-clock { grid-column: 2; grid-row: 1; min-width: 45px; }
+.garden-ui .round-clock > span { font-size: 7px; }
+.garden-ui .round-clock strong { font-size: 20px; }
+.garden-ui .arena-actions { grid-column: 3; grid-row: 1; margin-left: auto; gap: 5px; }
+.garden-ui .arena-actions button { min-width: 27px; height: 29px; font-size: 14px; }
+.garden-ui .scene-label { top: 30%; }
+.garden-ui .flight-hud { left: 10px; right: 10px; bottom: 12px; padding: 12px; gap: 12px; }
+.garden-ui .bag { gap: 3px; }
+.garden-ui .bag i { width: 9px; height: 12px; }
+.garden-ui .boost { width: 82px; }
+.garden-ui .flight-hud button span { display: none; }
+
+}
+@media (pointer: coarse) {
+.garden-ui .mobile-controls { position: absolute; display: flex; justify-content: space-between; bottom: 92px; left: 13px; right: 13px; pointer-events: none; }
+.garden-ui .mobile-controls button { width: 38px; height: 38px; border-radius: 3px; border: 1px solid var(--line); background: var(--panel-glass); color: var(--green); touch-action: none; pointer-events: auto; font-size: 16px; }
+.garden-ui .mobile-controls > .dpad { display: grid; grid-template-columns: repeat(3,38px); gap: 4px; }
+.garden-ui .mobile-controls > div:last-child { display: flex; gap: 5px; align-items: end; }
+.garden-ui .mobile-controls button[data-key="ShiftLeft"] { width: 52px; font-size: 10px; }
+.garden-ui:has(.intro:not([hidden])) .mobile-controls { display: none; }
+
+}
+.garden-ui { position: absolute; inset: 0; pointer-events: none; }
+.garden-ui button { pointer-events: auto; }

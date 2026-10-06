@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173**. Click **Start flight** to begin. The landing screen previews the AI garden.
+Open **http://127.0.0.1:5173**. Click **▶** to begin. The landing screen previews the AI garden.
 
 The interface uses a minimal dark terminal theme: gameplay fills the page, the objective and timer sit inside the game, and a compact controls strip stays beneath it. Use the **Hive** and **Worker Bee Sim** buttons to switch games; the inactive mode stops updating and its UI is removed from the page until you return.
 
@@ -82,6 +82,8 @@ Touch devices show directional, altitude, and boost buttons. Nectar collects aut
 
 The game uses Three.js and needs WebGL 2 / hardware acceleration. Its entry screen explains when graphics are unavailable.
 
-## Layout
+## Collaboration and modules
 
-`src/game.js` contains the garden simulation and rules, `src/main.js` contains garden artwork and mode navigation, `src/office-game.js` contains office movement and tasks, `src/office.js` contains the first-person office and controls, and `src/style.css` contains the responsive layout. Tests verify garden gameplay, office collision, movement, task progression, shift resets, and mode UI isolation using a local DOM simulation.
+Each game owns a folder under `src/games/`: `hive/` for the garden and `worker-bee/` for the office. The shell discovers game entries and styles automatically; adding a game does not require editing navigation or a central registry. Game-specific features stay inside their owning module, with scoped styles and independent simulation files.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [the module contract](docs/GAME_MODULES.md), and [agent instructions](AGENTS.md). `npm run check:modules` enforces descriptor/import/style boundaries and runs automatically during `npm run build`. Tests verify gameplay, collisions, tasks, settings, media lifecycle, and switching between actual game modules.

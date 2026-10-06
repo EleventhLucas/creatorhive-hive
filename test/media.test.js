@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
 import { Window } from 'happy-dom';
-import { MONITOR_CLIPS, createMonitorMedia } from '../src/monitor-media.js';
+import { MONITOR_CLIPS, createMonitorMedia } from '../src/games/worker-bee/media.js';
 
 test('bundled bee videos stay within the small-file budget and have only video tracks', () => {
   let total = 0;

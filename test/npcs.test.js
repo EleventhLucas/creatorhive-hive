@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OfficeGame, CHAIRS } from '../src/office-game.js';
-import { OfficeCoworkers, findOfficePath } from '../src/office-npcs.js';
+import { OfficeGame, CHAIRS } from '../src/games/worker-bee/simulation.js';
+import { OfficeCoworkers, findOfficePath } from '../src/games/worker-bee/npcs.js';
 
 function randomSource() { let seed = 97; return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
 test('coworker paths route around furniture using reachable floor points', () => {

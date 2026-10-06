@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GameSettings, viewBob } from '../src/settings.js';
+import { GameSettings, viewBob } from '../src/games/worker-bee/settings.js';
 
 test('FOV and bobbing settings stay in usable ranges and ignore invalid values', () => {
   const settings = new GameSettings();

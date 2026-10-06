@@ -1,4 +1,4 @@
-import { CHAIRS, OFFICE_BOUNDS } from './office-game.js';
+import { CHAIRS, OFFICE_BOUNDS } from './simulation.js';
 
 // Small floor-grid BFS routes around desks and chairs without a navmesh asset.
 export function findOfficePath(game, start, goal, blocked = () => false) {
