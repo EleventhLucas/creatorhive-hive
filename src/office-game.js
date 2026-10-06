@@ -5,17 +5,17 @@ export const DESKS = [
 ];
 export const CHAIRS = DESKS.map(({ x, z }, id) => ({ id, x, z: z + 1.1 }));
 export const STATIONS = [
-  { name: 'POLLEN REPORTS', action: 'Approve pollen reports', x: -8, z: -2.9 },
-  { name: 'HONEY PRINTER', action: 'Print honey labels', x: 9.5, z: -6.4 },
-  { name: 'HIVE ARCHIVE', action: 'File labels in the hive archive', x: -9.5, z: 6 },
-  { name: 'NECTAR BREAK', action: 'Refill your nectar mug', x: 9.5, z: 6 },
+  { name: 'POLLEN REPORTS', destination: 'Go to the report computer', action: 'Approve pollen reports', x: -8, z: -2.9 },
+  { name: 'HONEY PRINTER', destination: 'Move to the honey printer', action: 'Print honey labels', x: 9.5, z: -6.4 },
+  { name: 'HIVE ARCHIVE', destination: 'Go to the hive archive', action: 'File labels in the hive archive', x: -9.5, z: 6 },
+  { name: 'NECTAR BREAK', destination: 'Move to the nectar cooler', action: 'Refill your nectar mug', x: 9.5, z: 6 },
 ];
 export const OBSTACLES = [
-  ...DESKS.map(({ x, z }) => ({ x, z, halfX: 1.65, halfZ: 0.65 })),
-  ...DESKS.map(({ x, z }) => ({ x, z: z + 1.1, halfX: 0.35, halfZ: 0.36 })),
-  { x: 9.5, z: -8, halfX: 1.4, halfZ: 0.55 },
-  { x: -9.5, z: 8, halfX: 1.4, halfZ: 0.55 },
-  { x: 9.5, z: 8, halfX: 1.4, halfZ: 0.55 },
+  ...DESKS.map(({ x, z }) => ({ x, z, halfX: 1.65, halfZ: 0.65, height: 1.04 })),
+  ...DESKS.map(({ x, z }) => ({ x, z: z + 1.1, halfX: 0.35, halfZ: 0.36, height: 1.27 })),
+  { x: 9.5, z: -8, halfX: 1.4, halfZ: 0.55, height: 1.1 },
+  { x: -9.5, z: 8, halfX: 1.4, halfZ: 0.55, height: 1.1 },
+  { x: 9.5, z: 8, halfX: 1.4, halfZ: 0.55, height: 1.1 },
 ];
 
 export class OfficeGame {
@@ -25,14 +25,34 @@ export class OfficeGame {
     this.task = 0; this.progress = 0; this.elapsed = 0; this.complete = false;
     this.seated = null; this.standPoint = null; this.occupiedChairs = new Set(); this.workerPositions = [];
     this.mugCooldown = 0; this.projectiles = []; this.nextMug = 0; this.impacts = [];
+    this.altitude = 0; this.verticalSpeed = 0; this.grounded = true; this.glideRemaining = 1; this.gliding = false;
   }
   get station() { return STATIONS[this.task] ?? null; }
-  get nearStation() { return !!this.station && Math.hypot(this.x - this.station.x, this.z - this.station.z) < 2; }
+  get nearStation() { return !!this.station && this.altitude < 0.4 && Math.hypot(this.x - this.station.x, this.z - this.station.z) < 2; }
   get nearbyChair() {
+    if (this.altitude > 0.25) return null;
     return CHAIRS.filter(c => Math.hypot(this.x - c.x, this.z - c.z) < 1.8)
       .sort((a, b) => Math.hypot(this.x - a.x, this.z - a.z) - Math.hypot(this.x - b.x, this.z - b.z))[0] ?? null;
   }
-  get eyeHeight() { return this.seated === null ? 1.65 : 1.22; }
+  get eyeHeight() { return (this.seated === null ? 1.65 : 1.22) + this.altitude; }
+  jump() {
+    if (!this.grounded || this.seated !== null || this.complete) return false;
+    this.verticalSpeed = 6.2; this.grounded = false; this.glideRemaining = 1; return true;
+  }
+  stepFlight(dt, glide) {
+    if (this.seated !== null) return;
+    const support = OBSTACLES.filter(o => Math.abs(this.x - o.x) < o.halfX && Math.abs(this.z - o.z) < o.halfZ && this.altitude >= o.height - 0.02)
+      .reduce((height, o) => Math.max(height, o.height), 0);
+    if (this.altitude > support + 0.02) this.grounded = false;
+    this.gliding = !this.grounded && glide && this.verticalSpeed <= 0 && this.glideRemaining > 0;
+    if (!this.grounded) {
+      if (this.gliding) { this.glideRemaining = Math.max(0, this.glideRemaining - dt); this.verticalSpeed = Math.max(-0.7, this.verticalSpeed - 2 * dt); }
+      else this.verticalSpeed -= 12 * dt;
+      this.altitude += this.verticalSpeed * dt;
+      if (this.altitude > 2.2) { this.altitude = 2.2; this.verticalSpeed = Math.min(0, this.verticalSpeed); }
+      if (this.altitude <= support) { this.altitude = support; this.verticalSpeed = 0; this.grounded = true; this.glideRemaining = 1; this.gliding = false; }
+    }
+  }
   toggleSeat() {
     if (this.complete) return false;
     if (this.seated !== null) {
@@ -77,9 +97,13 @@ export class OfficeGame {
     return Math.abs(x) <= OFFICE_BOUNDS.x && Math.abs(z) <= OFFICE_BOUNDS.z && !OBSTACLES.some(o =>
       Math.abs(x - o.x) < o.halfX + radius && Math.abs(z - o.z) < o.halfZ + radius);
   }
-  canPlayerStand(x, z) { return this.canStand(x, z) && !this.workerPositions.some(w => Math.hypot(w.x - x, w.z - z) < 0.55); }
+  canPlayerStand(x, z) {
+    const floorClear = Math.abs(x) <= OFFICE_BOUNDS.x && Math.abs(z) <= OFFICE_BOUNDS.z && !OBSTACLES.some(o =>
+      this.altitude < o.height - 0.02 && Math.abs(x - o.x) < o.halfX + 0.32 && Math.abs(z - o.z) < o.halfZ + 0.32);
+    return floorClear && (this.altitude > 1.8 || !this.workerPositions.some(w => Math.hypot(w.x - x, w.z - z) < 0.55));
+  }
   look(dx, dy) { this.yaw -= dx * 0.002; this.pitch = Math.max(-1.2, Math.min(1.2, this.pitch - dy * 0.002)); }
-  tick(dt, { forward = 0, right = 0, sprint = false, work = false } = {}) {
+  tick(dt, { forward = 0, right = 0, sprint = false, work = false, glide = false } = {}) {
     dt = Math.max(0, Math.min(dt, 0.05));
     if (this.complete) return false;
     this.stepMugs(dt);
@@ -92,6 +116,7 @@ export class OfficeGame {
       if (this.canPlayerStand(this.x + dx, this.z)) this.x += dx;
       if (this.canPlayerStand(this.x, this.z + dz)) this.z += dz;
     }
+    this.stepFlight(dt, glide);
     if (work && this.nearStation) {
       this.progress += dt;
       if (this.progress >= 1.5) { this.task++; this.progress = 0; this.complete = this.task === STATIONS.length; return true; }

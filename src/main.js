@@ -226,7 +226,7 @@ function switchMode(next) {
   renderer.domElement.setAttribute('aria-label', next === 'office' ? 'A bee office with desks, stickman bee coworkers, and task stations' : 'A floating garden with bees and a golden hive');
   if (next === 'office') {
     office.activate();
-    $('controls').innerHTML = '<span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> walk</span><span><kbd>MOUSE</kbd> look</span><span><kbd>SHIFT</kbd> sprint</span><span><kbd>E</kbd> work</span><span><kbd>F</kbd> sit / stand</span><span><kbd>LMB</kbd> throw mug</span><span><kbd>ESC</kbd> / <kbd>P</kbd> pause</span>';
+    $('controls').innerHTML = '<span class="controls-label">CONTROLS</span><span><kbd>WASD</kbd> walk</span><span><kbd>MOUSE</kbd> look</span><span><kbd>SHIFT</kbd> sprint</span><span><kbd>SPACE</kbd> jump / glide</span><span><kbd>E</kbd> work</span><span><kbd>F</kbd> sit / stand</span><span><kbd>LMB</kbd> throw mug</span><span><kbd>ESC</kbd> / <kbd>P</kbd> pause</span>';
   } else { office.deactivate(); $('game-ui').replaceChildren(gardenUI); $('controls').innerHTML = gardenControls; }
   resize();
 }

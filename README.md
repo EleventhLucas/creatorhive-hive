@@ -23,9 +23,10 @@ Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (5
 
 ## Worker Bee Sim
 
-A first-person office game with stickman bee coworkers, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **Clock in**. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Active stations have glowing floor rings and a distance indicator. After completing a shift, click **Next shift** to start again.
+A first-person office game with stickman bee coworkers, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **▶** to clock in. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Objectives say where to go. Active stations have a large bobbing arrow, a glowing floor ring, and a distance indicator; at the destination the objective changes to a work action. After completing a shift, click **▶** for the next shift to start again.
 
 - **WASD / arrows**: walk; **Shift**: sprint.
+- **Space**: jump, then hold to glide for up to one second on descent. Glide recharges on landing. The bee can land on furniture; room bounds and the ceiling still constrain movement.
 - **Mouse**: look around. Clicking Clock in captures the mouse; **Esc** releases it and pauses. Dragging the game is also supported when mouse capture is unavailable.
 - **Hold E** near the highlighted station for 1.5 seconds to complete its task.
 - **F** near an unoccupied computer chair: sit / stand. You can look around, throw mugs, and do computer work while seated; walking resumes after standing up.
@@ -37,7 +38,7 @@ Furniture and walls block movement. Switching modes releases the mouse, and retu
 
 ### Coworkers
 
-Five stickman bee coworkers alternate between typing at their computers, standing up, walking around desks, nectar breaks, and idle conversation. Their joints animate for walking, sitting, typing, sipping, and gestures. Nearby thrown-mug impacts make them react briefly before returning to their routine. They route around furniture, avoid other bees, and reserve chairs while seated; returning workers wait if you took their chair. The pollen-report chair is always available for the player. NPC activity pauses with the office.
+Five stickman bee coworkers alternate between typing at their computers, standing up, walking around desks, nectar breaks, and idle conversation. Their joints animate for walking, sitting, typing, sipping, and gestures. Nearby thrown-mug impacts make them react briefly before returning to their routine. They route around furniture, avoid the player, and reserve chairs while seated; returning workers wait if you took their chair. The pollen-report chair is always available for the player. NPC-to-NPC collisions are disabled. NPC activity pauses with the office.
 
 ### Monitor videos
 

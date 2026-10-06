@@ -56,7 +56,7 @@ export class OfficeCoworkers {
     worker.path = findOfficePath(this.game, worker, target);
   }
   blocked(worker, x, z) {
-    return Math.hypot(this.game.x - x, this.game.z - z) < 0.62 || this.workers.some(other => other !== worker && Math.hypot(other.x - x, other.z - z) < 0.52);
+    return Math.hypot(this.game.x - x, this.game.z - z) < 0.62;
   }
   arrive(worker) {
     if (worker.returning) {

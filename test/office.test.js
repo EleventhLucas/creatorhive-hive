@@ -57,3 +57,21 @@ test('office tasks require proximity and uninterrupted work', () => {
   const time = game.elapsed; game.tick(0.05, { forward: 1 }); assert.equal(game.elapsed, time);
   game.reset(); assert.equal(game.shift, 2); assert.equal(game.complete, false); assert.equal(game.task, 0); assert.equal(game.elapsed, 0);
 });
+test('jumping gives one second of glide, cannot double-jump, and recharges on landing', () => {
+  const plain = new OfficeGame(), glide = new OfficeGame();
+  assert.equal(plain.jump(), true); assert.equal(glide.jump(), true); assert.equal(glide.jump(), false);
+  let glideTime = 0, peak = 0;
+  for (let i = 0; i < 24; i++) {
+    plain.tick(0.05); glide.tick(0.05, { glide: true });
+    peak = Math.max(peak, glide.altitude); if (glide.gliding) glideTime += 0.05;
+  }
+  assert.equal(plain.grounded, true); assert.ok(glide.altitude > 0, 'glide extends airtime'); assert.ok(peak < 2.2);
+  for (let i = 0; i < 70; i++) { glide.tick(0.05, { glide: true }); if (glide.gliding) glideTime += 0.05; }
+  assert.ok(glideTime <= 1.05); assert.equal(glide.altitude, 0); assert.equal(glide.grounded, true); assert.equal(glide.glideRemaining, 1);
+  glide.x = -8; glide.z = -2.9; glide.toggleSeat(); assert.equal(glide.jump(), false, 'cannot jump from a seated pose');
+});
+test('bee flight lands on a desk without falling through its surface', () => {
+  const landing = new OfficeGame(); landing.x = -8; landing.z = -5; landing.altitude = 1.5; landing.verticalSpeed = -1; landing.grounded = false;
+  for (let i = 0; i < 20; i++) landing.tick(0.05);
+  assert.equal(landing.altitude, 1.04); assert.equal(landing.grounded, true); assert.ok(landing.eyeHeight <= 3.85);
+});

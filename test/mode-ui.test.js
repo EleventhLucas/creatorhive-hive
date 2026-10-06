@@ -41,7 +41,7 @@ test('office replaces all garden overlays and switching back preserves the garde
       officePanel.querySelector('[data-office="start"]').click();
       office.update(0.05, 0);
       assert.equal(officePanel.querySelector('[data-office="intro"]').hidden, true);
-      assert.match(officePanel.querySelector('[data-office="task"]').textContent, /Approve pollen reports/);
+      assert.match(officePanel.querySelector('[data-office="task"]').textContent, /Go to the report computer/);
 
       office.deactivate();
       layer.replaceChildren(garden);

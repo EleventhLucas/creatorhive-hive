@@ -72,7 +72,9 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   sign('NECTAR > COFFEE', 9.5, 2.7, 9.86, 3).rotation.y = Math.PI;
   const stationMarkers = STATIONS.map(s => {
     const ring = shape(new THREE.TorusGeometry(0.65, 0.025, 6, 32), '#b9df78', s.x, 0.04, s.z, scene, true); ring.rotation.x = -Math.PI / 2;
-    const label = sign(s.name, s.x, 2.4, s.z, 2.5); return { ring, label };
+    const label = sign(s.name, s.x, 2.7, s.z, 2.5);
+    const pointer = shape(new THREE.ConeGeometry(0.35, 0.65, 4), '#f1ce50', s.x, 2, s.z, scene, true); pointer.rotation.z = Math.PI;
+    return { ring, label, pointer };
   });
   function stickBee(x, z, yaw = 0) {
     const bee = new THREE.Group(); bee.position.set(x, 0, z); bee.rotation.y = yaw; scene.add(bee);
@@ -116,7 +118,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   const thrownMugs = new Map();
 
   const root = document.createElement('div'); root.className = 'office-ui'; root.hidden = true;
-  root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary" data-office="start">Clock in <span>↗</span></button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
+  root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary play-button" data-office="start" aria-label="Clock in" title="Clock in">▶</button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
   const $ = name => root.querySelector(`[data-office="${name}"]`);
   const settingsButton = document.createElement('button'); settingsButton.className = 'office-settings'; settingsButton.textContent = '⚙'; settingsButton.setAttribute('aria-label', 'Worker Bee Sim settings'); settingsButton.title = 'Worker Bee Sim settings'; settingsButton.onclick = showOfficeSettings;
   root.querySelector('.office-top').insertBefore(settingsButton, $('pause'));
@@ -124,10 +126,11 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   const mugStatus = document.createElement('div'); mugStatus.className = 'office-mug'; root.appendChild(mugStatus);
   const throwButton = document.createElement('button'); throwButton.textContent = 'Throw'; throwButton.className = 'touch-throw'; root.querySelector('.office-touch > div:last-child').appendChild(throwButton);
   const seatButton = document.createElement('button'); seatButton.textContent = 'Sit'; seatButton.className = 'touch-seat'; root.querySelector('.office-touch > div:last-child').appendChild(seatButton);
+  const jumpButton = document.createElement('button'); jumpButton.textContent = '↥'; jumpButton.dataset.officeKey = 'Space'; jumpButton.setAttribute('aria-label', 'Jump and hold to glide'); root.querySelector('.dpad').appendChild(jumpButton);
   const keys = new Set(); let active = false, started = false, paused = false, lastTouch = null;
   let walkDistance = 0, bobHeight = 0, bobRoll = 0, npcTime = 0;
   const canvas = renderer.domElement;
-  function renderIntro(title, description, button) { $('intro').hidden = false; $('intro').querySelector('h1').textContent = title; $('intro').querySelector('p').textContent = description; $('start').firstChild.textContent = button + ' '; }
+  function renderIntro(title, description, button) { $('intro').hidden = false; $('intro').querySelector('h1').textContent = title; $('intro').querySelector('p').textContent = description; $('start').textContent = '▶'; $('start').setAttribute('aria-label', button); $('start').title = button; }
   function unlock() { if (document.pointerLockElement === canvas) document.exitPointerLock(); }
   function captureMouse() { if (matchMedia('(pointer: coarse)').matches) return; try { const request = canvas.requestPointerLock(); request?.catch(() => notify('Mouse capture unavailable. Drag the game to look around.')); } catch { notify('Drag the game to look around.'); } }
   function setPaused(value) {
@@ -156,7 +159,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   canvas.addEventListener('pointerdown', e => { if (!active || !started || paused) return; dragged = false; lastTouch = { x: e.clientX, y: e.clientY }; if (document.pointerLockElement !== canvas) canvas.setPointerCapture?.(e.pointerId); });
   canvas.addEventListener('pointermove', e => { if (!lastTouch || !active || paused || document.pointerLockElement === canvas) return; const dx = e.clientX - lastTouch.x, dy = e.clientY - lastTouch.y; if (Math.hypot(dx, dy) > 2) dragged = true; game.look(dx * 2, dy * 2); lastTouch = { x: e.clientX, y: e.clientY }; });
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(event, () => { lastTouch = null; });
-  document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) setPaused(!paused); if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (e.code === 'KeyF' && !e.repeat && !paused) { if (game.toggleSeat()) keys.clear(); } if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
+  document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) setPaused(!paused); if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (e.code === 'Space' && !e.repeat && !paused) game.jump(); if (e.code === 'KeyF' && !e.repeat && !paused) { if (game.toggleSeat()) keys.clear(); } if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
   document.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); if (active && started && !paused && !game.complete) setPaused(true); });
   document.addEventListener('visibilitychange', () => {
@@ -165,7 +168,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     else if (!started) monitorMedia.start();
   });
   for (const button of root.querySelectorAll('[data-office-key]')) {
-    button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.officeKey); });
+    button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); keys.add(button.dataset.officeKey); if (button.dataset.officeKey === 'Space' && active && started && !paused) game.jump(); });
     for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => keys.delete(button.dataset.officeKey));
   }
   function update(dt, time) {
@@ -175,20 +178,20 @@ export function createOffice({ renderer, container, notify, settings, openDialog
       const finished = game.tick(dt, {
         forward: Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown')),
         right: Number(keys.has('KeyD') || keys.has('ArrowRight')) - Number(keys.has('KeyA') || keys.has('ArrowLeft')),
-        sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), work: keys.has('KeyE'),
+        sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), work: keys.has('KeyE'), glide: keys.has('Space'),
       });
       if (finished) { notify(game.complete ? 'Shift complete.' : 'Task complete.'); keys.delete('KeyE'); }
       if (game.complete) { monitorMedia.pause(); unlock(); renderIntro('Shift complete.', `4 tasks finished in ${Math.floor(game.elapsed / 60)}:${String(Math.floor(game.elapsed % 60)).padStart(2, '0')}.`, 'Next shift'); }
     }
     const walked = Math.hypot(game.x - previousX, game.z - previousZ); walkDistance += walked;
-    const bob = viewBob(walkDistance, settings.bobbing, walked > 0.001 && game.seated === null);
+    const bob = viewBob(walkDistance, settings.bobbing, walked > 0.001 && game.seated === null && game.grounded);
     const blend = 1 - Math.exp(-12 * dt); bobHeight += (bob.height - bobHeight) * blend; bobRoll += (bob.roll - bobRoll) * blend;
     if (!settings.bobbing) { bobHeight = 0; bobRoll = 0; }
     camera.position.set(game.x, game.eyeHeight + bobHeight, game.z); camera.rotation.set(game.pitch, game.yaw, bobRoll);
     if (camera.fov !== settings.fov) { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
     heldMug.visible = game.mugCooldown === 0;
     mugStatus.hidden = !started || paused || game.complete;
-    mugStatus.textContent = game.mugCooldown ? `REFILL ${game.mugCooldown.toFixed(1)}s` : 'LMB — throw nectar';
+    mugStatus.textContent = game.gliding ? `≋ GLIDE ${game.glideRemaining.toFixed(1)}s` : game.mugCooldown ? `REFILL ${game.mugCooldown.toFixed(1)}s` : 'LMB — throw nectar';
     seatHint.textContent = game.seated !== null ? 'F — stand up' : game.nearbyChair ? (game.occupiedChairs.has(game.nearbyChair.id) ? 'Chair occupied' : 'F — sit at computer') : '';
     seatButton.textContent = game.seated !== null ? 'Stand' : 'Sit';
     for (const mug of game.projectiles) {
@@ -197,14 +200,14 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     }
     const liveMugs = new Set(game.projectiles.map(mug => mug.id));
     for (const [id, model] of thrownMugs) if (!liveMugs.has(id)) { model.removeFromParent(); thrownMugs.delete(id); }
-    $('shift').textContent = String(game.shift).padStart(2, '0'); $('task').textContent = game.station?.action ?? 'Shift complete'; $('count').textContent = `${game.task} / 4 tasks`;
+    $('shift').textContent = String(game.shift).padStart(2, '0'); $('task').textContent = game.station ? (game.nearStation ? `Hold E to ${game.station.action.toLowerCase()}` : game.station.destination) : 'Shift complete'; $('count').textContent = `${game.task} / 4 tasks`;
     $('interact').hidden = !started || paused || game.complete;
     if (game.station) {
       const distance = Math.hypot(game.x - game.station.x, game.z - game.station.z);
-      $('prompt').textContent = game.nearStation ? `Hold E — ${game.station.action}` : `${game.station.name} · ${distance.toFixed(0)}m`;
+      $('prompt').textContent = game.nearStation ? `Hold E — ${game.station.action}` : `${game.station.destination} · ${distance.toFixed(0)}m`;
       $('progress').style.width = `${game.progress / 1.5 * 100}%`;
     }
-    stationMarkers.forEach((m, i) => { const current = i === game.task; m.ring.visible = current; m.label.material.opacity = current ? 1 : 0.55; m.label.material.transparent = true; m.label.rotation.y = Math.atan2(game.x - m.label.position.x, game.z - m.label.position.z); });
+    stationMarkers.forEach((m, i) => { const current = i === game.task; m.ring.visible = current; m.pointer.visible = current; m.pointer.position.y = 2.05 + Math.sin(npcTime * 2.8) * 0.2; m.label.material.opacity = current ? 1 : 0.55; m.label.material.transparent = true; m.label.rotation.y = Math.atan2(game.x - m.label.position.x, game.z - m.label.position.z); });
     if (!paused && !game.complete) { coworkers.tick(dt, started ? game.impacts : []); npcTime += dt; }
     coworkers.workers.forEach((worker, i) => {
       const model = colleagues[i], sitting = coworkers.isSeated(worker), walking = worker.state === 'walking';

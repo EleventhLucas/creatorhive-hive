@@ -10,6 +10,12 @@ test('coworker paths route around furniture using reachable floor points', () =>
   assert.ok(path.length > 2); assert.ok(path.every(p => game.canStand(p.x, p.z)));
   assert.deepEqual(path.at(-1), goal);
 });
+test('NPCs pass through each other while still avoiding the player', () => {
+  const game = new OfficeGame(), crew = new OfficeCoworkers(game, { random: randomSource() });
+  const first = crew.workers[0], second = crew.workers[1]; second.x = 2; second.z = 3;
+  assert.equal(crew.blocked(first, second.x, second.z), false);
+  assert.equal(crew.blocked(first, game.x, game.z), true);
+});
 test('coworkers work, stand, walk, take breaks, and reserve occupied chairs', () => {
   const game = new OfficeGame(), crew = new OfficeCoworkers(game, { random: randomSource() });
   assert.deepEqual([...game.occupiedChairs], [1, 2, 4]); assert.ok(!game.occupiedChairs.has(0), 'leave the report desk available to the player');
