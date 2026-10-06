@@ -5,13 +5,13 @@
 .office-ui .office-objective small { display: block; margin-top: 6px; color: var(--muted); font-size: 9px; }
 .office-ui .office-pause { width: 34px; height: 32px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }
 .office-ui .office-settings { width: 34px; height: 32px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-size: 16px; }
-.office-ui .crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e5efc6; opacity: .8; font-size: 20px; font-weight: 400; text-shadow: 0 1px 3px #000; }
+.office-ui .crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #f4efff; opacity: .8; font-size: 20px; font-weight: 400; text-shadow: 0 1px 3px #000; }
 .office-ui:has(.intro:not([hidden])) .crosshair { display: none; }
 .office-ui .office-interact { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); background: var(--panel-glass); border: 1px solid var(--line); padding: 13px 18px; text-align: center; font-size: 11px; color: var(--text); width: max-content; max-width: 90%; border-radius: 3px; }
 .office-ui .office-interact .progress-track { margin-top: 10px; }
 .office-ui .seat-hint { display: block; font-size: 9px; color: var(--green); margin-top: 9px; }
 .office-ui .seat-hint:empty { display: none; }
-.office-ui .office-mug { position: absolute; bottom: 28px; right: 20px; font-size: 9px; color: #b7c598; }
+.office-ui .office-mug { position: absolute; bottom: 28px; right: 20px; font-size: 9px; color: #cbd6f2; }
 .office-ui .office-touch { display: none; }
 @media (max-width: 600px) {
 .office-ui .office-top { padding: 14px 12px; gap: 10px; display: grid; grid-template-columns: minmax(0,1fr) auto auto; }

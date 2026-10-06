@@ -23,7 +23,7 @@ Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (5
 
 ## Worker Bee Sim
 
-A first-person office game with stickman bee coworkers, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **▶** to clock in. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Objectives say where to go. Active stations have a large bobbing arrow, a glowing floor ring, and a distance indicator; at the destination the objective changes to a work action. After completing a shift, click **▶** for the next shift to start again.
+A first-person office game with colorful coral, blue, lavender, mint, and pink workstations, varied mugs and coworker accents, stickman bee coworkers, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **▶** to clock in. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Objectives say where to go. Active stations have a large bobbing arrow, a glowing floor ring, and a distance indicator; at the destination the objective changes to a work action. After completing a shift, click **▶** for the next shift to start again.
 
 - **WASD / arrows**: walk; **Shift**: sprint.
 - **Space**: jump, then hold to glide for up to one second on descent. Glide recharges on landing. The bee can land on furniture; room bounds and the ceiling still constrain movement.
