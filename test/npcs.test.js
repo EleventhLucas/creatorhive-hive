@@ -52,7 +52,7 @@ test('coworkers wait instead of taking a chair occupied by the player', () => {
   assert.equal(worker.state, 'working'); assert.ok(game.occupiedChairs.has(chair.id));
 });
 test('rapid direct hits trigger each random knockdown style and safe respawn', () => {
-  for (const [random, style, threshold] of [[0, 'crumple', 2], [0.5, 'ragdoll', 4], [0.99, 'burst', 5]]) {
+  for (const [random, style, threshold] of [[0, 'crumple', 2], [0.5, 'ragdoll', 3], [0.99, 'burst', 3]]) {
     const game = new OfficeGame(), crew = new OfficeCoworkers(game, { random: () => random });
     const worker = crew.workers[0];
     assert.equal(worker.hitThreshold, threshold);
@@ -66,7 +66,7 @@ test('rapid direct hits trigger each random knockdown style and safe respawn', (
     for (let i = 0; i < 53; i++) crew.tick(0.05);
     assert.equal(worker.state, 'standing'); assert.ok(game.canStand(worker.x, worker.z));
     assert.ok(Math.hypot(worker.x - game.x, worker.z - game.z) > 1);
-    assert.equal(worker.hitTimes.length, 0); assert.ok(game.workerPositions.includes(worker));
+    assert.equal(worker.hitTimes.length, 0); assert.equal(worker.hitThreshold, threshold); assert.ok(game.workerPositions.includes(worker));
   }
 });
 test('hits outside the four second succession window do not stack', () => {

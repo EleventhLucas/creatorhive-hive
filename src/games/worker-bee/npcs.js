@@ -42,7 +42,7 @@ export class OfficeCoworkers {
       return { id, chairId, x: sitting ? chair.x : id === 3 ? 6 : -6, z: sitting ? chair.z : id === 3 ? 2 : 6,
         yaw: sitting ? Math.PI : 0, state: sitting ? 'working' : 'standing', timer: 4 + id * 1.6 + this.random() * 4,
         walkDistance: 0, path: [], destination: null, returning: false, onBreak: false, blockedTime: 0,
-        reactionCooldown: 0, saved: null, hitTimes: [], hitThreshold: 2 + Math.floor(this.random() * 4), deathStyle: null, deathAge: 0 };
+        reactionCooldown: 0, saved: null, hitTimes: [], hitThreshold: 2 + Math.floor(this.random() * 2), deathStyle: null, deathAge: 0 };
     });
     this.syncChairs();
   }
@@ -89,7 +89,7 @@ export class OfficeCoworkers {
     point ??= BREAK_SPOTS.find(p => this.game.canStand(p.x, p.z) && Math.hypot(p.x - this.game.x, p.z - this.game.z) > 1);
     Object.assign(worker, { x: point.x, z: point.z, yaw: this.random() * Math.PI * 2, state: 'standing', timer: 2,
       onBreak: false, returning: false, destination: null, reactionCooldown: 0, hitTimes: [],
-      hitThreshold: 2 + Math.floor(this.random() * 4), deathStyle: null, deathAge: 0 });
+      hitThreshold: 2 + Math.floor(this.random() * 2), deathStyle: null, deathAge: 0 });
   }
   tick(dt, impacts = [], hits = []) {
     dt = Math.max(0, Math.min(dt, 0.05));

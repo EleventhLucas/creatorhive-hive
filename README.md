@@ -38,7 +38,7 @@ Furniture and walls block movement. Switching modes releases the mouse, and retu
 
 ### Coworkers
 
-Five stickman bee coworkers alternate between typing at their computers, standing up, walking around desks, nectar breaks, and idle conversation. Their joints animate for walking, sitting, typing, sipping, and gestures. Nearby thrown-mug impacts make them react briefly before returning to their routine. Land 2–5 direct mug hits within four seconds and a coworker randomly crumples, tumbles like a ragdoll, or bursts into honey-colored particles; they respawn at a random clear office location after 2.6 seconds. Each mug can hit a given coworker only once. They route around furniture, avoid the player, and reserve chairs while seated; returning workers wait if you took their chair. The pollen-report chair is always available for the player. NPC-to-NPC collisions are disabled. NPC activity pauses with the office.
+Five stickman bee coworkers alternate between typing at their computers, standing up, walking around desks, nectar breaks, and idle conversation. Their joints animate for walking, sitting, typing, sipping, and gestures. Nearby thrown-mug impacts make them react briefly before returning to their routine. Land 2–3 direct mug hits within four seconds and a coworker randomly crumples, tumbles like a ragdoll, or bursts into honey-colored particles; they respawn at a random clear office location after 2.6 seconds. Each mug can hit a given coworker only once. They route around furniture, avoid the player, and reserve chairs while seated; returning workers wait if you took their chair. The pollen-report chair is always available for the player. NPC-to-NPC collisions are disabled. NPC activity pauses with the office.
 
 ### Cartoon sounds
 
