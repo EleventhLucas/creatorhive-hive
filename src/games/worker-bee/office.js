@@ -4,6 +4,8 @@ import { GameSettings, viewBob } from './settings.js';
 import { createMonitorMedia } from './media.js';
 import { OfficeCoworkers } from './npcs.js';
 import { OFFICE_PALETTE as palette } from './palette.js';
+import { createSurfaceTextures } from './features/surfaces.js';
+import { createTie, createHoneyMug } from './features/props.js';
 import { createOfficeAudio } from './features/audio/engine.js';
 import { createOfficeSoundscape } from './features/audio/soundscape.js';
 
@@ -20,9 +22,15 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   scene.add(new THREE.HemisphereLight('#fff5e5', '#686b65', 2));
   const sunlight = new THREE.DirectionalLight('#fff0df', 2); sunlight.position.set(-9, 12, -2); scene.add(sunlight);
   const cache = new Map();
-  function mat(color, glow = false) { const key = `${color}:${glow}`; if (!cache.has(key)) cache.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.7, ...(glow ? { emissive: color, emissiveIntensity: 0.7 } : {}) })); return cache.get(key); }
-  function shape(geometry, color, x, y, z, parent = scene, glow = false) { const m = new THREE.Mesh(geometry, mat(color, glow)); m.position.set(x, y, z); parent.add(m); return m; }
-  const box = (w, h, d, color, x, y, z, parent, glow) => shape(new THREE.BoxGeometry(w, h, d), color, x, y, z, parent, glow);
+  const surfaces = createSurfaceTextures();
+  function mat(color, glow = false, surface = 'paint') {
+    const key = `${color}:${glow}:${surface}`;
+    if (!cache.has(key)) cache.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.7,
+      ...(glow ? { emissive: color, emissiveIntensity: 0.7 } : { map: surfaces[surface], bumpMap: surfaces[surface], bumpScale: surface === 'fabric' ? 0.008 : 0.003 }) }));
+    return cache.get(key);
+  }
+  function shape(geometry, color, x, y, z, parent = scene, glow = false, surface = 'paint') { const m = new THREE.Mesh(geometry, mat(color, glow, surface)); m.position.set(x, y, z); parent.add(m); return m; }
+  const box = (w, h, d, color, x, y, z, parent, glow, surface) => shape(new THREE.BoxGeometry(w, h, d), color, x, y, z, parent, glow, surface);
   function ball(r, color, x, y, z, parent = scene) { return shape(new THREE.SphereGeometry(r, 12, 8), color, x, y, z, parent); }
   function rod(a, b, r, color, parent) {
     const start = new THREE.Vector3(...a), end = new THREE.Vector3(...b), delta = end.clone().sub(start);
@@ -36,7 +44,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     const texture = new THREE.CanvasTexture(canvas);
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(width, width / 4), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })); panel.position.set(x, y, z); parent.add(panel); return panel;
   }
-  box(26, 0.15, 20, palette.floor, 0, -0.08, 0);
+  box(26, 0.15, 20, palette.floor, 0, -0.08, 0, scene, false, 'fabric');
   const grid = new THREE.GridHelper(26, 26, '#92968f', '#82877f'); grid.position.y = 0.01; scene.add(grid);
   box(26, 4, 0.2, palette.walls[0], 0, 2, -10); box(26, 4, 0.2, palette.walls[1], 0, 2, 10);
   box(0.2, 4, 20, palette.walls[2], -13, 2, 0); box(0.2, 4, 20, palette.walls[3], 13, 2, 0);
@@ -52,14 +60,14 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   const monitors = [];
   for (const [index, d] of DESKS.entries()) {
     const colors = palette.desks[index];
-    box(3.3, 0.12, 1.3, colors.top, d.x, 0.98, d.z);
+    box(3.3, 0.12, 1.3, colors.top, d.x, 0.98, d.z, scene, false, 'wood');
     for (const offset of [-1.35, 1.35]) box(0.1, 0.93, 1, palette.frame, d.x + offset, 0.46, d.z);
     box(1.1, 0.75, 0.1, palette.frame, d.x, 1.52, d.z - 0.23);
     monitors.push(box(0.94, 0.58, 0.02, '#b9d9f5', d.x, 1.54, d.z - 0.17, scene, true));
     box(0.1, 0.3, 0.1, palette.frame, d.x, 1.17, d.z - 0.23);
     box(0.85, 0.04, 0.3, '#d5d4ca', d.x, 1.06, d.z + 0.35);
-    box(0.7, 0.15, 0.65, colors.chair, d.x, 0.55, d.z + 1.1);
-    box(0.7, 0.7, 0.12, colors.chair, d.x, 0.92, d.z + 1.4);
+    box(0.7, 0.15, 0.65, colors.chair, d.x, 0.55, d.z + 1.1, scene, false, 'fabric');
+    box(0.7, 0.7, 0.12, colors.chair, d.x, 0.92, d.z + 1.4, scene, false, 'fabric');
     box(0.08, 0.5, 0.08, '#9a9f9e', d.x, 0.25, d.z + 1.1);
     // Low dividers stay inside the desk collision footprint.
     box(3.3, 0.75, 0.09, colors.divider, d.x, 1.35, d.z - 0.59);
@@ -107,7 +115,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     rod([0, 0.9, 0], [0, 1.51, 0], 0.055, palette.frame, body);
     const abdomen = ball(0.23, '#e9c45f', 0, 1.03, -0.02, body); abdomen.scale.set(0.8, 1.35, 0.8);
     for (const y of [0.92, 1.09]) shape(new THREE.CylinderGeometry(0.18, 0.18, 0.07, 12), palette.frame, 0, y, -0.02, body);
-    box(0.09, 0.22, 0.045, accent, 0, 1.36, 0.065, body);
+    body.add(createTie(mat(accent)));
     return { root: bee, body, arms, forearms, thighs, calves, hands, wings };
   }
   const deathBursts = coworkers.workers.map(() => {
@@ -124,11 +132,8 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   // Visible stick forearms and a nectar mug: an office worker, not a weapon.
   rod([0.36, -0.6, -0.4], [0.28, -0.37, -0.65], 0.035, '#deb953', camera);
   rod([-0.35, -0.62, -0.35], [-0.26, -0.4, -0.7], 0.035, '#deb953', camera);
-  const mugTemplate = new THREE.Group();
-  shape(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 12), palette.playerMug, 0, 0, 0, mugTemplate).name = 'mug-shell';
-  shape(new THREE.CylinderGeometry(0.077, 0.077, 0.012, 12), '#955823', 0, 0.085, 0, mugTemplate);
-  const handle = shape(new THREE.TorusGeometry(0.055, 0.012, 6, 16), palette.playerMug, 0.1, 0, 0, mugTemplate); handle.rotation.y = Math.PI / 2; handle.name = 'mug-handle';
-  function paintMug(model, color) { model.traverse(part => { if (part.name === 'mug-shell' || part.name === 'mug-handle') part.material = mat(color); }); }
+  const mugTemplate = createHoneyMug(color => mat(color), palette.playerMug);
+  function paintMug(model, color) { model.traverse(part => { if (part.name === 'mug-shell' || part.name === 'mug-handle' || part.name === 'mug-bottom') part.material = mat(color); }); }
   function makeMug(color) { const model = mugTemplate.clone(true); paintMug(model, color); return model; }
   const heldMug = makeMug(palette.playerMug); heldMug.name = 'held-nectar-mug'; heldMug.position.set(0.27, -0.32, -0.7); camera.add(heldMug);
   for (const [index, model] of colleagues.entries()) { model.mug = makeMug(palette.accents[index]); model.hands[1].add(model.mug); }
