@@ -1,11 +1,13 @@
 export class GameSettings {
   constructor({ reducedMotion = false } = {}) {
+    this.volume = 0.55;
     this.fov = 75;
     this.bobbing = reducedMotion ? 0 : 0.35;
   }
   set(key, value) {
     if (!Number.isFinite(value)) return;
     if (key === 'fov') this.fov = Math.max(55, Math.min(105, value));
+    if (key === 'volume') this.volume = Math.max(0, Math.min(1, value));
     if (key === 'bobbing') this.bobbing = Math.max(0, Math.min(1, value));
   }
 }

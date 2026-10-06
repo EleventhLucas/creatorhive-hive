@@ -19,7 +19,7 @@ The interface uses a minimal dark terminal theme: gameplay fills the page, the o
 
 The centered navigation switches games. The top-right global **⚙** controls fullscreen, dark/light appearance, accent colors, and compact UI. The default is black and yellow; preferences last for the current page session.
 
-Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (55–105°) and walking view bobbing (0–100%; 0 disables it). Reduced-motion devices default to no bobbing. Its volume slider is disabled and marked TODO; Worker Bee Sim has no audio.
+Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (55–105°) and walking view bobbing (0–100%; 0 disables it). Reduced-motion devices default to no bobbing. Its sound volume slider controls cartoon effects and office ambience (default 55%; 0 mutes). The HUD **♫** button mutes/unmutes quickly.
 
 ## Worker Bee Sim
 
@@ -39,6 +39,12 @@ Furniture and walls block movement. Switching modes releases the mouse, and retu
 ### Coworkers
 
 Five stickman bee coworkers alternate between typing at their computers, standing up, walking around desks, nectar breaks, and idle conversation. Their joints animate for walking, sitting, typing, sipping, and gestures. Nearby thrown-mug impacts make them react briefly before returning to their routine. Land 2–5 direct mug hits within four seconds and a coworker randomly crumples, tumbles like a ragdoll, or bursts into honey-colored particles; they respawn at a random clear office location after 2.6 seconds. Each mug can hit a given coworker only once. They route around furniture, avoid the player, and reserve chairs while seated; returning workers wait if you took their chair. The pollen-report chair is always available for the player. NPC-to-NPC collisions are disabled. NPC activity pauses with the office.
+
+### Cartoon sounds
+
+Worker Bee Sim synthesizes **30 original cartoon effect families**, each with **three base variations** and randomized pitch/timing: footsteps, spring jumps, wing flutter, landing thuds, mug throws/refills and surface clinks, rubbery coworker hits, crumple/ragdoll/burst knockdowns, respawn pops, chair squeaks, report typing, printer noises, archive rustles, nectar bubbles, task jingles, bee chatter, sipping, and occasional buzzes.
+
+Sound starts after clicking **▶**. The office **⚙** has a working volume slider; **♫** toggles mute. Nearby coworkers and impacts sound louder and pan with your view. Effects stop on pause, hidden tabs, or switching games. Monitor videos remain silent. The original synthesis recipes and resulting sounds are CC0-dedicated; no samples, recordings, third-party sound packs, audio downloads, or large files are used. See [audio source and rights](src/games/worker-bee/features/audio/README.md).
 
 ### Monitor videos
 

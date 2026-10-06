@@ -89,17 +89,17 @@ export class OfficeGame {
         const seated = this.occupiedChairs.has(worker.chairId);
         if (y < 0.35 || y > (seated ? 1.85 : 2.1) || Math.hypot(oldX + dx * t - worker.x, oldZ + dz * t - worker.z) > 0.42) continue;
         mug.hitWorkers.add(worker.id); this.hits.push({ workerId: worker.id, mugId: mug.id });
-        this.impacts.push({ x: worker.x, z: worker.z });
+        this.impacts.push({ x: worker.x, z: worker.z, kind: 'worker' });
         mug.vx *= -0.25; mug.vz *= -0.25; mug.vy = 1.5;
         break;
       }
-      if (Math.abs(mug.x) > 12.7) { mug.x = Math.sign(mug.x) * 12.7; mug.vx *= -0.4; this.impacts.push({ x: mug.x, z: mug.z }); }
-      if (Math.abs(mug.z) > 9.7) { mug.z = Math.sign(mug.z) * 9.7; mug.vz *= -0.4; this.impacts.push({ x: mug.x, z: mug.z }); }
+      if (Math.abs(mug.x) > 12.7) { mug.x = Math.sign(mug.x) * 12.7; mug.vx *= -0.4; this.impacts.push({ x: mug.x, z: mug.z, kind: 'wall' }); }
+      if (Math.abs(mug.z) > 9.7) { mug.z = Math.sign(mug.z) * 9.7; mug.vz *= -0.4; this.impacts.push({ x: mug.x, z: mug.z, kind: 'wall' }); }
       if (mug.y > 3.8) { mug.y = 3.8; mug.vy = -Math.abs(mug.vy) * 0.3; }
       const table = OBSTACLES.find(o => mug.y < 1.14 && oldY >= 1.14 && Math.abs(mug.x - o.x) < o.halfX && Math.abs(mug.z - o.z) < o.halfZ);
-      if (table) { mug.y = 1.14; mug.vy = Math.abs(mug.vy) * 0.3; mug.vx *= 0.5; mug.vz *= 0.5; this.impacts.push({ x: mug.x, z: mug.z }); }
+      if (table) { mug.y = 1.14; mug.vy = Math.abs(mug.vy) * 0.3; mug.vx *= 0.5; mug.vz *= 0.5; this.impacts.push({ x: mug.x, z: mug.z, kind: 'desk' }); }
       if (mug.y < 0.13) {
-        mug.y = 0.13; if (Math.abs(mug.vy) > 1) this.impacts.push({ x: mug.x, z: mug.z });
+        mug.y = 0.13; if (Math.abs(mug.vy) > 1) this.impacts.push({ x: mug.x, z: mug.z, kind: 'floor' });
         mug.vy = Math.abs(mug.vy) > 0.7 ? Math.abs(mug.vy) * 0.3 : 0; mug.vx *= 0.75; mug.vz *= 0.75;
       }
     }

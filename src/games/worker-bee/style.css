@@ -35,3 +35,11 @@
 .office-ui:has(.intro:not([hidden])) .office-touch { display: none; }
 
 }
+.office-ui .office-sound { width: 34px; height: 32px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-size: 17px; }
+.office-ui .office-sound[aria-pressed="false"] { color: var(--muted); }
+@media (max-width: 600px) {
+  .office-ui .office-top { grid-template-columns: minmax(0,1fr) auto auto auto; }
+  .office-ui .office-sound { grid-column: 2; grid-row: 1; }
+  .office-ui .office-settings { grid-column: 3; }
+  .office-ui .office-pause { grid-column: 4; }
+}

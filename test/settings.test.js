@@ -17,3 +17,10 @@ test('view bobbing disappears at rest and when disabled', () => {
   const bob = viewBob(1, 1, true); assert.ok(Math.abs(bob.height) <= 0.06); assert.ok(Math.abs(bob.roll) <= 0.007);
   assert.notEqual(bob.height, 0);
 });
+test('office volume clamps to 0–100% and ignores invalid settings', () => {
+  const settings = new GameSettings(); assert.equal(settings.volume, 0.55);
+  settings.set('volume', 7); assert.equal(settings.volume, 1);
+  settings.set('volume', -1); assert.equal(settings.volume, 0);
+  settings.set('volume', NaN); assert.equal(settings.volume, 0);
+  settings.set('volume', 0.23); assert.equal(settings.volume, 0.23);
+});

@@ -3,11 +3,16 @@ import { OfficeGame, DESKS, STATIONS } from './simulation.js';
 import { GameSettings, viewBob } from './settings.js';
 import { createMonitorMedia } from './media.js';
 import { OfficeCoworkers } from './npcs.js';
+import { createOfficeAudio } from './features/audio/engine.js';
+import { createOfficeSoundscape } from './features/audio/soundscape.js';
 
-export function createOffice({ renderer, container, notify, settings, openDialog = () => {}, random = Math.random }) {
+export function createOffice({ renderer, container, notify, settings, openDialog = () => {}, random = Math.random, audio = createOfficeAudio() }) {
   settings ??= new GameSettings({ reducedMotion: typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches });
   const game = new OfficeGame();
   const coworkers = new OfficeCoworkers(game, { random });
+  const soundscape = createOfficeSoundscape({ audio, random });
+  soundscape.reset(game, coworkers.workers);
+  audio.setVolume(settings.volume);
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#13231c');
   scene.fog = new THREE.Fog('#13231c', 22, 48);
   const camera = new THREE.PerspectiveCamera(75, 1, 0.08, 70); camera.rotation.order = 'YXZ'; scene.add(camera);
@@ -127,6 +132,20 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   const $ = name => root.querySelector(`[data-office="${name}"]`);
   const settingsButton = document.createElement('button'); settingsButton.className = 'office-settings'; settingsButton.textContent = '⚙'; settingsButton.setAttribute('aria-label', 'Worker Bee Sim settings'); settingsButton.title = 'Worker Bee Sim settings'; settingsButton.onclick = showOfficeSettings;
   root.querySelector('.office-top').insertBefore(settingsButton, $('pause'));
+  const soundButton = document.createElement('button'); soundButton.className = 'office-sound';
+  soundButton.onclick = () => { if (settings.volume) { lastVolume = settings.volume; settings.set('volume', 0); } else settings.set('volume', lastVolume); syncVolume(); };
+  root.querySelector('.office-top').insertBefore(soundButton, settingsButton);
+  let lastVolume = settings.volume || 0.55;
+  function syncVolume() {
+    audio.setVolume(settings.volume);
+    soundButton.textContent = settings.volume ? '♫' : '♩';
+    soundButton.setAttribute('aria-label', settings.volume ? 'Mute office sounds' : 'Unmute office sounds');
+    soundButton.setAttribute('aria-pressed', String(settings.volume > 0)); soundButton.title = settings.volume ? 'Mute sounds' : 'Unmute sounds';
+    const slider = document.getElementById('office-volume'), output = document.getElementById('office-volume-value');
+    if (slider) slider.value = Math.round(settings.volume * 100);
+    if (output) output.textContent = settings.volume ? `${Math.round(settings.volume * 100)}%` : 'Muted';
+    if (active && started && !paused && !game.complete) audio.unlock();
+  }
   const seatHint = document.createElement('small'); seatHint.className = 'seat-hint'; $('interact').appendChild(seatHint);
   const mugStatus = document.createElement('div'); mugStatus.className = 'office-mug'; root.appendChild(mugStatus);
   const throwButton = document.createElement('button'); throwButton.textContent = 'Throw'; throwButton.className = 'touch-throw'; root.querySelector('.office-touch > div:last-child').appendChild(throwButton);
@@ -140,36 +159,42 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   function captureMouse() { if (matchMedia('(pointer: coarse)').matches) return; try { const request = canvas.requestPointerLock(); request?.catch(() => notify('Mouse capture unavailable. Drag the game to look around.')); } catch { notify('Drag the game to look around.'); } }
   function setPaused(value) {
     paused = value; keys.clear(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume office simulation' : 'Pause office simulation');
-    if (paused) { monitorMedia.pause(); unlock(); renderIntro('Shift paused.', 'Resume when you’re ready.', 'Resume'); } else { $('intro').hidden = true; monitorMedia.start(); captureMouse(); }
+    audio.setEnabled(active && started && !paused);
+    if (paused) { monitorMedia.pause(); unlock(); renderIntro('Shift paused.', 'Resume when you’re ready.', 'Resume'); } else { $('intro').hidden = true; monitorMedia.start(); audio.unlock(); captureMouse(); }
   }
   function showOfficeSettings() {
+    audio.setEnabled(false);
     if (started && !game.complete) setPaused(true);
-    openDialog(`<p class="eyebrow">WORKER BEE SIM</p><h2>Office settings</h2><div class="settings-row"><label for="office-fov">Field of view <output id="office-fov-value">${settings.fov}°</output></label><input id="office-fov" type="range" min="55" max="105" step="1" value="${settings.fov}"/></div><div class="settings-row"><label for="office-bob">View bobbing <output id="office-bob-value">${Math.round(settings.bobbing * 100)}%</output></label><input id="office-bob" type="range" min="0" max="100" step="5" value="${Math.round(settings.bobbing * 100)}"/><small>0 disables walking motion.</small></div><div class="settings-row"><label for="office-volume">Sound volume <span class="setting-todo">TODO</span></label><input id="office-volume" type="range" min="0" max="100" value="0" disabled/><small>Office audio is not implemented. Videos are silent.</small></div>`);
+    openDialog(`<p class="eyebrow">WORKER BEE SIM</p><h2>Office settings</h2><div class="settings-row"><label for="office-fov">Field of view <output id="office-fov-value">${settings.fov}°</output></label><input id="office-fov" type="range" min="55" max="105" step="1" value="${settings.fov}"/></div><div class="settings-row"><label for="office-bob">View bobbing <output id="office-bob-value">${Math.round(settings.bobbing * 100)}%</output></label><input id="office-bob" type="range" min="0" max="100" step="5" value="${Math.round(settings.bobbing * 100)}"/><small>0 disables walking motion.</small></div><div class="settings-row"><label for="office-volume">Sound volume <output id="office-volume-value">${settings.volume ? `${Math.round(settings.volume * 100)}%` : 'Muted'}</output></label><input id="office-volume" type="range" min="0" max="100" step="1" value="${Math.round(settings.volume * 100)}"/><small>Cartoon effects and office ambience. 0 mutes all sounds. Monitor videos stay silent.</small></div>`);
     const fov = document.getElementById('office-fov'), bob = document.getElementById('office-bob');
     if (fov) fov.oninput = e => { settings.set('fov', Number(e.target.value)); document.getElementById('office-fov-value').textContent = `${settings.fov}°`; };
+    const volume = document.getElementById('office-volume');
+    if (volume) volume.oninput = e => { settings.set('volume', Number(e.target.value) / 100); if (settings.volume) lastVolume = settings.volume; syncVolume(); };
     if (bob) bob.oninput = e => { settings.set('bobbing', Number(e.target.value) / 100); document.getElementById('office-bob-value').textContent = `${Math.round(settings.bobbing * 100)}%`; };
   }
   $('start').onclick = () => {
-    if (game.complete) { game.reset(); coworkers.reset(); monitorMedia.shuffle(); started = false; }
-    started = true; $('pause').disabled = false; setPaused(false);
+    if (game.complete) { game.reset(); coworkers.reset(); monitorMedia.shuffle(); started = false; soundscape.reset(game, coworkers.workers); }
+    const clockingIn = !started;
+    started = true; $('pause').disabled = false; setPaused(false); audio.play(clockingIn ? 'clockIn' : 'resume');
   };
-  $('pause').onclick = () => { if (started && !game.complete) setPaused(!paused); };
+  $('pause').onclick = () => { if (started && !game.complete) { const resuming = paused; setPaused(!paused); if (resuming) audio.play('resume'); } };
   let dragged = false;
   function throwMug() { if (active && started && !paused && !game.complete) game.throwMug(); }
   throwButton.onclick = throwMug;
-  seatButton.onclick = () => { if (active && started && !paused) game.toggleSeat(); };
+  function toggleSeat() { if (!game.toggleSeat()) audio.play('denied'); else keys.clear(); }
+  seatButton.onclick = () => { if (active && started && !paused) toggleSeat(); };
   canvas.addEventListener('click', () => { if (active && started && !paused && !game.complete) { if (!dragged) throwMug(); captureMouse(); } });
   document.addEventListener('pointerlockchange', () => { if (active && started && !game.complete && !paused && document.pointerLockElement !== canvas) setPaused(true); });
   document.addEventListener('mousemove', e => { if (active && !paused && document.pointerLockElement === canvas) game.look(e.movementX, e.movementY); });
   canvas.addEventListener('pointerdown', e => { if (!active || !started || paused) return; dragged = false; lastTouch = { x: e.clientX, y: e.clientY }; if (document.pointerLockElement !== canvas) canvas.setPointerCapture?.(e.pointerId); });
   canvas.addEventListener('pointermove', e => { if (!lastTouch || !active || paused || document.pointerLockElement === canvas) return; const dx = e.clientX - lastTouch.x, dy = e.clientY - lastTouch.y; if (Math.hypot(dx, dy) > 2) dragged = true; game.look(dx * 2, dy * 2); lastTouch = { x: e.clientX, y: e.clientY }; });
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(event, () => { lastTouch = null; });
-  document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) setPaused(!paused); if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (e.code === 'Space' && !e.repeat && !paused) game.jump(); if (e.code === 'KeyF' && !e.repeat && !paused) { if (game.toggleSeat()) keys.clear(); } if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
+  document.addEventListener('keydown', e => { if (!active || !started || document.querySelector('dialog[open]')) return; if (e.code === 'KeyP' && !e.repeat && !game.complete) { const resuming = paused; setPaused(!paused); if (resuming) audio.play('resume'); } if (e.code === 'Escape' && !game.complete && !paused) setPaused(true); if (e.code === 'Space' && !e.repeat && !paused) game.jump(); if (e.code === 'KeyF' && !e.repeat && !paused) toggleSeat(); if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); keys.add(e.code); });
   document.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); if (active && started && !paused && !game.complete) setPaused(true); });
   document.addEventListener('visibilitychange', () => {
     if (!active) return;
-    if (document.hidden) { monitorMedia.pause(); if (started && !paused && !game.complete) setPaused(true); }
+    if (document.hidden) { audio.setEnabled(false); monitorMedia.pause(); if (started && !paused && !game.complete) setPaused(true); }
     else if (!started) monitorMedia.start();
   });
   for (const button of root.querySelectorAll('[data-office-key]')) {
@@ -178,7 +203,9 @@ export function createOffice({ renderer, container, notify, settings, openDialog
   }
   function update(dt, time) {
     if (!active) return;
+    const playing = started && !paused && !game.complete;
     const previousX = game.x, previousZ = game.z;
+    audio.setVolume(settings.volume);
     if (started && !paused && !game.complete) {
       const finished = game.tick(dt, {
         forward: Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown')),
@@ -214,6 +241,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     }
     stationMarkers.forEach((m, i) => { const current = i === game.task; m.ring.visible = current; m.pointer.visible = current; m.pointer.position.y = 2.05 + Math.sin(npcTime * 2.8) * 0.2; m.label.material.opacity = current ? 1 : 0.55; m.label.material.transparent = true; m.label.rotation.y = Math.atan2(game.x - m.label.position.x, game.z - m.label.position.z); });
     if (!paused && !game.complete) { coworkers.tick(dt, started ? game.impacts : [], started ? game.hits : []); npcTime += dt; }
+    if (playing) soundscape.tick(dt, game, coworkers.workers);
     coworkers.workers.forEach((worker, i) => {
       const model = colleagues[i], sitting = coworkers.isSeated(worker), walking = worker.state === 'walking';
       const gait = Math.sin(worker.walkDistance * 8), idle = Math.sin(npcTime * 1.4 + i);
@@ -253,11 +281,12 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     });
     renderer.render(scene, camera);
   }
+  syncVolume();
   return {
     update,
-    pause() { if (started && !game.complete) setPaused(true); },
+    pause() { audio.setEnabled(false); if (started && !game.complete) setPaused(true); },
     resize(width, height) { camera.aspect = width / height; camera.updateProjectionMatrix(); },
     activate() { active = true; root.hidden = false; container.replaceChildren(root); if (started && !game.complete) setPaused(true); else if (!started) monitorMedia.start(); },
-    deactivate() { active = false; root.hidden = true; root.remove(); monitorMedia.stop(); keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },
+    deactivate() { audio.setEnabled(false); active = false; root.hidden = true; root.remove(); monitorMedia.stop(); keys.clear(); lastTouch = null; unlock(); if (started) paused = true; },
   };
 }

@@ -5,7 +5,8 @@ export function createOfficeAudio({ random = Math.random, createContext = () => 
   const Context = globalThis.AudioContext ?? globalThis.webkitAudioContext;
   return Context ? new Context() : null;
 } } = {}) {
-  let context, master, noiseBuffer, enabled = false, volume = 0.55;
+  let context, master, noiseBuffer, enabled = false, volume = 0.55, resuming = false;
+  const queued = [];
   const voices = new Set(), recent = new Map(), variants = new Map();
   function unlock() {
     if (!volume) return;
@@ -20,16 +21,25 @@ export function createOfficeAudio({ random = Math.random, createContext = () => 
         const samples = noiseBuffer.getChannelData(0); let seed = 73;
         for (let i = 0; i < samples.length; i++) { seed = (seed * 1664525 + 1013904223) >>> 0; samples[i] = seed / 2147483648 - 1; }
       }
-      context.resume()?.catch(() => {});
+      if (context.state !== 'running' && !resuming) {
+        resuming = true;
+        Promise.resolve(context.resume()).then(() => {
+          resuming = false;
+          const pending = queued.splice(0);
+          if (enabled && volume) for (const [name, options] of pending) play(name, options);
+        }).catch(() => { resuming = false; queued.length = 0; });
+      }
     } catch { context = null; master = null; }
   }
   function stop() {
     for (const voice of [...voices]) { try { voice.source.stop(); } catch {} voice.clean(); }
-    recent.clear();
+    recent.clear(); queued.length = 0;
   }
   function setVolume(value) {
     if (!Number.isFinite(value)) return;
-    volume = Math.max(0, Math.min(1, value));
+    const next = Math.max(0, Math.min(1, value));
+    if (next === volume) return;
+    volume = next;
     if (master) { master.gain.cancelScheduledValues(context.currentTime); master.gain.setTargetAtTime(enabled ? volume : 0, context.currentTime, 0.015); }
     if (!volume) stop();
   }
@@ -39,7 +49,11 @@ export function createOfficeAudio({ random = Math.random, createContext = () => 
     if (master) { master.gain.cancelScheduledValues(context.currentTime); master.gain.setValueAtTime(enabled ? volume : 0, context.currentTime); }
   }
   function play(name, { distance = 0, pan = 0, gain = 1 } = {}) {
-    if (!enabled || !volume || !context || context.state !== 'running' || !CUES[name]) return false;
+    if (!enabled || !volume || !context || !CUES[name]) return false;
+    if (context.state !== 'running') {
+      if (!resuming || queued.length >= 6) return false;
+      queued.push([name, { distance, pan, gain }]); return true;
+    }
     const now = context.currentTime;
     if (now - (recent.get(name) ?? -Infinity) < 0.045) return false;
     const previous = variants.get(name), variant = previous === undefined ? Math.floor(random() * 3) : (previous + 1 + Math.floor(random() * 2)) % 3;

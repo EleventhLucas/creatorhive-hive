@@ -47,7 +47,24 @@ test('distance/panning, burst throttling, and a voice cap constrain noisy scenes
   for (const s of context.sources) s.onended();
   context.currentTime++; assert.equal(audio.play('shiftComplete'), true, 'ended nodes release voice capacity');
 });
-test('unsupported audio and rejected resume remain playable and silent', () => {
+test('unsupported audio remains playable and silent', () => {
   const audio = createOfficeAudio({ createContext: () => null }); audio.setEnabled(true); audio.unlock(); assert.equal(audio.play('jump'), false);
   const broken = createOfficeAudio({ createContext() { throw new Error('unavailable'); } }); broken.unlock(); assert.equal(broken.play('jump'), false);
+});
+
+test('suspended contexts play their first gesture cue after resume without replaying paused sounds', async () => {
+  const context = fakeAudioContext(); context.state = 'suspended';
+  let finish; context.resume = () => new Promise(resolve => { finish = () => { context.state = 'running'; resolve(); }; });
+  const audio = createOfficeAudio({ createContext: () => context }); audio.setEnabled(true); audio.unlock();
+  assert.equal(audio.play('clockIn'), true); assert.equal(context.sources.length, 0);
+  finish(); await Promise.resolve(); assert.ok(context.sources.length > 0);
+  audio.stop(); context.state = 'suspended'; audio.unlock(); audio.play('resume'); audio.setEnabled(false);
+  const count = context.sources.length; finish(); await Promise.resolve(); assert.equal(context.sources.length, count);
+});
+test('a rejected browser resume discards pending cues and can retry on a later gesture', async () => {
+  const context = fakeAudioContext(); context.state = 'suspended'; context.resume = () => Promise.reject(new Error('autoplay blocked'));
+  const audio = createOfficeAudio({ createContext: () => context }); audio.setEnabled(true); audio.unlock(); audio.play('clockIn');
+  await Promise.resolve(); await Promise.resolve(); assert.equal(context.sources.length, 0);
+  context.resume = () => { context.state = 'running'; return Promise.resolve(); }; audio.unlock();
+  await Promise.resolve(); assert.equal(audio.play('jump'), true);
 });
