@@ -72,7 +72,7 @@ export class OfficeGame {
     this.projectiles.push({ id: ++this.nextMug, x: this.x + dx * 0.6 + Math.cos(this.yaw) * 0.27,
       y: Math.max(1.28, this.eyeHeight - 0.2), z: this.z + dz * 0.6 - Math.sin(this.yaw) * 0.27,
       vx: dx * 11, vy: dy * 11 + 1.7, vz: dz * 11, age: 0, hitWorkers: new Set() });
-    this.projectiles = this.projectiles.slice(-12); this.mugCooldown = 0.5; return true;
+    this.projectiles = this.projectiles.slice(-12); this.mugCooldown = 0.2; return true;
   }
   stepMugs(dt) {
     this.mugCooldown = Math.max(0, this.mugCooldown - dt); if (this.mugCooldown < 1e-6) this.mugCooldown = 0;

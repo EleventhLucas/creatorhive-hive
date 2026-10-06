@@ -23,7 +23,8 @@ test('office input drives FOV, mug throwing/refill, chair sitting, and pause wit
     const held = scene.getObjectByName('held-nectar-mug'); assert.equal(held.visible, true);
     canvas.click(); office.update(0.05, 0); assert.equal(held.visible, false);
     assert.ok(scene.getObjectByName('thrown-nectar-mug-1'));
-    for (let i = 0; i < 10; i++) office.update(0.05, 0); assert.equal(held.visible, true);
+    for (let i = 0; i < 2; i++) office.update(0.05, 0); assert.equal(held.visible, false);
+    office.update(0.05, 0); assert.equal(held.visible, true);
 
     function walk(code, frames) {
       document.dispatchEvent(new browserWindow.KeyboardEvent('keydown', { code }));

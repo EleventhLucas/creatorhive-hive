@@ -22,11 +22,11 @@ test('chair sitting blocks walking, allows computer work, and returns to a safe 
   assert.deepEqual({ x: game.x, z: game.z }, before); assert.ok(game.canStand(game.x, game.z));
   game.occupiedChairs.add(0); assert.equal(game.toggleSeat(), false, 'occupied chairs cannot be used');
 });
-test('mugs aim with the view, refill in half a second, bounce inside the office, and expire', () => {
+test('mugs aim with the view, refill in 0.2 seconds, bounce inside the office, and expire', () => {
   const game = new OfficeGame(); game.pitch = 0.3;
   assert.equal(game.throwMug(), true); assert.equal(game.throwMug(), false); assert.equal(game.projectiles.length, 1);
   assert.ok(game.projectiles[0].vy > 1.7); assert.ok(game.projectiles[0].vz < 0);
-  for (let i = 0; i < 9; i++) game.tick(0.05); assert.equal(game.throwMug(), false);
+  for (let i = 0; i < 3; i++) game.tick(0.05); assert.equal(game.throwMug(), false);
   game.tick(0.05); assert.equal(game.mugCooldown, 0); assert.equal(game.throwMug(), true);
   for (let i = 0; i < 82; i++) game.tick(0.05);
   assert.equal(game.projectiles.length, 0);

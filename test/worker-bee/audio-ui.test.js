@@ -18,7 +18,8 @@ test('office audio follows play, settings volume, mute, pause, and game activati
     assert.equal(unlocked, 0); office.activate(); office.update(0.05, 0); assert.equal(enabled, false); assert.equal(unlocked, 0);
     layer.querySelector('[data-office="start"]').click(); assert.equal(enabled, true); assert.ok(unlocked > 0); assert.ok(cues.includes('clockIn'));
     canvas.click(); office.update(0.05, 0); assert.ok(cues.includes('throw'));
-    for (let i = 0; i < 10; i++) office.update(0.05, 0); assert.ok(cues.includes('refill'));
+    for (let i = 0; i < 2; i++) office.update(0.05, 0); assert.ok(!cues.includes('refill'));
+    office.update(0.05, 0); assert.ok(cues.includes('refill'));
     layer.querySelector('.office-settings').click(); assert.equal(enabled, false);
     const slider = document.getElementById('office-volume'); assert.equal(slider.disabled, false);
     slider.value = '23'; slider.oninput({ target: slider }); assert.equal(settings.volume, 0.23); assert.equal(volume, 0.23);
