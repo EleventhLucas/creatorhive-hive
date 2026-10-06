@@ -35,7 +35,7 @@ test('office input drives FOV, mug throwing/refill, chair sitting, and pause wit
     walk('KeyW', 18); walk('KeyA', 66); walk('KeyW', 50); walk('KeyD', 16);
     assert.ok(Math.abs(camera.position.x + 8) < 0.2, `chair approach x: ${camera.position.x}`); assert.ok(Math.abs(camera.position.z + 2.88) < 0.2, `chair approach z: ${camera.position.z}`);
     document.dispatchEvent(new browserWindow.KeyboardEvent('keydown', { code: 'KeyF' })); office.update(0.05, 0);
-    assert.equal(camera.position.y, 1.22); assert.match(layer.querySelector('.seat-hint').textContent, /stand up/);
+    assert.equal(camera.position.y, 1.54); assert.equal(camera.rotation.x, 0); assert.equal(camera.rotation.y, 0); assert.match(layer.querySelector('.seat-hint').textContent, /stand up/);
     const seatedX = camera.position.x, seatedZ = camera.position.z; walk('KeyW', 10);
     assert.equal(camera.position.x, seatedX); assert.equal(camera.position.z, seatedZ);
     document.dispatchEvent(new browserWindow.KeyboardEvent('keyup', { code: 'KeyF' }));

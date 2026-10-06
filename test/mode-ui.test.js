@@ -40,7 +40,7 @@ test('office replaces all garden overlays and switching back preserves the garde
       officePanel.querySelector('[data-office="start"]').click();
       host.update(0.05, 0);
       assert.equal(officePanel.querySelector('[data-office="intro"]').hidden, true);
-      assert.match(officePanel.querySelector('[data-office="task"]').textContent, /Go to the report computer/);
+      assert.match(officePanel.querySelector('[data-office="task"]').textContent, /Sit at the report computer/);
 
       host.select('hive');
       assert.equal(document.querySelector('.office-ui'), null);

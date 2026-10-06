@@ -8,7 +8,8 @@ test('FOV and bobbing settings stay in usable ranges and ignore invalid values',
   settings.set('fov', 20); assert.equal(settings.fov, 55);
   settings.set('fov', NaN); assert.equal(settings.fov, 55);
   settings.set('bobbing', -1); assert.equal(settings.bobbing, 0);
-  settings.set('bobbing', 9); assert.equal(settings.bobbing, 1);
+  settings.set('bobbing', 9); assert.equal(settings.bobbing, 3);
+  assert.equal(new GameSettings().bobbing, 1);
   assert.equal(new GameSettings({ reducedMotion: true }).bobbing, 0);
 });
 test('view bobbing disappears at rest and when disabled', () => {

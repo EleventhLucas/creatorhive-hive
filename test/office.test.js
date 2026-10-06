@@ -45,13 +45,17 @@ test('office tasks require proximity and uninterrupted work', () => {
   const game = new OfficeGame();
   for (let i = 0; i < 60; i++) game.tick(0.05, { work: true });
   assert.equal(game.task, 0); assert.equal(game.progress, 0);
-  game.x = STATIONS[0].x; game.z = STATIONS[0].z;
+  game.x = -8; game.z = -2.9;
+  for (let i = 0; i < 30; i++) game.tick(0.05, { work: true });
+  assert.equal(game.progress, 0); assert.equal(game.task, 0, 'reports require sitting at the marked chair');
+  game.toggleSeat();
   for (let i = 0; i < 10; i++) game.tick(0.05, { work: true });
   assert.ok(game.progress > 0); game.tick(0.05); assert.equal(game.progress, 0);
   for (const station of STATIONS) {
     assert.equal(game.station, station); game.x = station.x; game.z = station.z;
-    assert.ok(game.canStand(game.x, game.z), 'task station must be reachable');
+    assert.ok(station.chairId !== undefined ? game.seated === station.chairId : game.canStand(game.x, game.z), 'task station must be reachable');
     for (let i = 0; i < 30; i++) game.tick(0.05, { work: true });
+    if (game.seated !== null) game.toggleSeat();
   }
   assert.equal(game.task, 4); assert.equal(game.complete, true); assert.equal(game.station, null);
   const time = game.elapsed; game.tick(0.05, { forward: 1 }); assert.equal(game.elapsed, time);

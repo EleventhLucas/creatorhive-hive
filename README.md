@@ -19,17 +19,17 @@ The interface uses a minimal dark terminal theme: gameplay fills the page, the o
 
 The centered navigation switches games. The top-right global **⚙** controls fullscreen, dark/light appearance, accent colors, and compact UI. The default is black and yellow; preferences last for the current page session.
 
-Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (55–105°) and walking view bobbing (0–100%; 0 disables it). Reduced-motion devices default to no bobbing. Its sound volume slider controls cartoon effects and office ambience (default 55%; 0 mutes). The HUD **♫** button mutes/unmutes quickly.
+Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (55–105°) and walking view bobbing (0–300%; default 100%; 0 disables camera and item motion). Reduced-motion devices default to no bobbing. Its sound volume slider controls cartoon effects and office ambience (default 55%; 0 mutes). The HUD **♫** button mutes/unmutes quickly.
 
 ## Worker Bee Sim
 
-A first-person office game with wood desks, neutral walls, coordinated blue and sage dividers, and restrained ceramic mug and tie accents, stickman bee coworkers, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **▶** to clock in. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Objectives say where to go. Active stations have a large bobbing arrow, a glowing floor ring, and a distance indicator; at the destination the objective changes to a work action. After completing a shift, click **▶** for the next shift to start again.
+A first-person office game with wood desks, neutral walls, coordinated blue and sage dividers, and restrained ceramic mug and tie accents, stickman bee coworkers with shaped ties, subtle procedural surface grain, honeycomb archives, pollen paperwork, and a nectar cooler. Select **Worker Bee Sim** and click **▶** to clock in. Finish four tasks in order: approve pollen reports, print honey labels, file them, and refill your nectar mug. Objectives say where to go. Active stations have a large bobbing arrow, a glowing floor ring, and a distance indicator; at the destination the objective changes to a work action. After completing a shift, click **▶** for the next shift to start again.
 
 - **WASD / arrows**: walk; **Shift**: sprint.
 - **Space**: jump, then hold to glide for up to one second on descent. Glide recharges on landing. The bee can land on furniture; room bounds and the ceiling still constrain movement.
 - **Mouse**: look around. Clicking Clock in captures the mouse; **Esc** releases it and pauses. Dragging the game is also supported when mouse capture is unavailable.
-- **Hold E** near the highlighted station for 1.5 seconds to complete its task.
-- **F** near an unoccupied computer chair: sit / stand. You can look around, throw mugs, and do computer work while seated; walking resumes after standing up.
+- **Hold E** near the highlighted station for 1.5 seconds to complete its task. For pollen reports, first press **F** at the marked computer chair to sit; the seated view lines up with the monitor center.
+- **F** near an unoccupied computer chair: sit / stand. You can look around, throw mugs, and do computer work while seated; walking resumes after standing up. Hands and the hexagonal nectar mug bob and sway with walking and mouse movement.
 - **Left click**: throw your nectar mug. A replacement appears after 0.2 seconds. Thrown mugs follow gravity, bounce off floors/walls/desktops, and disappear after four seconds.
 - **P** or the pause button: pause/resume. Resume captures the mouse again.
 - Touch devices: drag the game to look, use the direction buttons to walk, hold **Work** at a station, and use **Sit / Stand** and **Throw**.

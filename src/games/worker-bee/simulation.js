@@ -5,7 +5,7 @@ export const DESKS = [
 ];
 export const CHAIRS = DESKS.map(({ x, z }, id) => ({ id, x, z: z + 1.1 }));
 export const STATIONS = [
-  { name: 'POLLEN REPORTS', destination: 'Go to the report computer', action: 'Approve pollen reports', x: -8, z: -2.9 },
+  { name: 'POLLEN REPORTS', destination: 'Sit at the report computer', action: 'Approve pollen reports', x: CHAIRS[0].x, z: CHAIRS[0].z, chairId: 0 },
   { name: 'HONEY PRINTER', destination: 'Move to the honey printer', action: 'Print honey labels', x: 9.5, z: -6.4 },
   { name: 'HIVE ARCHIVE', destination: 'Go to the hive archive', action: 'File labels in the hive archive', x: -9.5, z: 6 },
   { name: 'NECTAR BREAK', destination: 'Move to the nectar cooler', action: 'Refill your nectar mug', x: 9.5, z: 6 },
@@ -28,13 +28,13 @@ export class OfficeGame {
     this.altitude = 0; this.verticalSpeed = 0; this.grounded = true; this.glideRemaining = 1; this.gliding = false;
   }
   get station() { return STATIONS[this.task] ?? null; }
-  get nearStation() { return !!this.station && this.altitude < 0.4 && Math.hypot(this.x - this.station.x, this.z - this.station.z) < 2; }
+  get nearStation() { return !!this.station && (this.station.chairId === undefined || this.seated === this.station.chairId) && this.altitude < 0.4 && Math.hypot(this.x - this.station.x, this.z - this.station.z) < 2; }
   get nearbyChair() {
     if (this.altitude > 0.25) return null;
     return CHAIRS.filter(c => Math.hypot(this.x - c.x, this.z - c.z) < 1.8)
       .sort((a, b) => Math.hypot(this.x - a.x, this.z - a.z) - Math.hypot(this.x - b.x, this.z - b.z))[0] ?? null;
   }
-  get eyeHeight() { return (this.seated === null ? 1.65 : 1.22) + this.altitude; }
+  get eyeHeight() { return (this.seated === null ? 1.65 : 1.54) + this.altitude; }
   jump() {
     if (!this.grounded || this.seated !== null || this.complete) return false;
     this.verticalSpeed = 6.2; this.grounded = false; this.glideRemaining = 1; return true;
@@ -64,7 +64,7 @@ export class OfficeGame {
     const chair = this.nearbyChair;
     if (!chair || this.occupiedChairs.has(chair.id)) return false;
     this.standPoint = { x: this.x, z: this.z }; this.seated = chair.id;
-    this.x = chair.x; this.z = chair.z; this.yaw = 0; this.pitch = -0.03; return true;
+    this.x = chair.x; this.z = chair.z; this.yaw = 0; this.pitch = 0; return true;
   }
   throwMug() {
     if (this.complete || this.mugCooldown > 0) return false;
