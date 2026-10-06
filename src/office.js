@@ -4,7 +4,8 @@ import { GameSettings, viewBob } from './settings.js';
 import { createMonitorMedia } from './monitor-media.js';
 import { OfficeCoworkers } from './office-npcs.js';
 
-export function createOffice({ renderer, container, notify, settings = new GameSettings(), openSettings = () => {}, random = Math.random }) {
+export function createOffice({ renderer, container, notify, settings, openDialog = () => {}, random = Math.random }) {
+  settings ??= new GameSettings({ reducedMotion: typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches });
   const game = new OfficeGame();
   const coworkers = new OfficeCoworkers(game, { random });
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#13231c');
@@ -117,7 +118,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   const root = document.createElement('div'); root.className = 'office-ui'; root.hidden = true;
   root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary" data-office="start">Clock in <span>↗</span></button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
   const $ = name => root.querySelector(`[data-office="${name}"]`);
-  const settingsButton = document.createElement('button'); settingsButton.className = 'office-settings'; settingsButton.textContent = '⚙'; settingsButton.setAttribute('aria-label', 'Game settings'); settingsButton.title = 'Game settings'; settingsButton.onclick = openSettings;
+  const settingsButton = document.createElement('button'); settingsButton.className = 'office-settings'; settingsButton.textContent = '⚙'; settingsButton.setAttribute('aria-label', 'Worker Bee Sim settings'); settingsButton.title = 'Worker Bee Sim settings'; settingsButton.onclick = showOfficeSettings;
   root.querySelector('.office-top').insertBefore(settingsButton, $('pause'));
   const seatHint = document.createElement('small'); seatHint.className = 'seat-hint'; $('interact').appendChild(seatHint);
   const mugStatus = document.createElement('div'); mugStatus.className = 'office-mug'; root.appendChild(mugStatus);
@@ -132,6 +133,13 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   function setPaused(value) {
     paused = value; keys.clear(); $('pause').textContent = paused ? '▶' : 'Ⅱ'; $('pause').setAttribute('aria-label', paused ? 'Resume office simulation' : 'Pause office simulation');
     if (paused) { monitorMedia.pause(); unlock(); renderIntro('Shift paused.', 'Resume when you’re ready.', 'Resume'); } else { $('intro').hidden = true; monitorMedia.start(); captureMouse(); }
+  }
+  function showOfficeSettings() {
+    if (started && !game.complete) setPaused(true);
+    openDialog(`<p class="eyebrow">WORKER BEE SIM</p><h2>Office settings</h2><div class="settings-row"><label for="office-fov">Field of view <output id="office-fov-value">${settings.fov}°</output></label><input id="office-fov" type="range" min="55" max="105" step="1" value="${settings.fov}"/></div><div class="settings-row"><label for="office-bob">View bobbing <output id="office-bob-value">${Math.round(settings.bobbing * 100)}%</output></label><input id="office-bob" type="range" min="0" max="100" step="5" value="${Math.round(settings.bobbing * 100)}"/><small>0 disables walking motion.</small></div><div class="settings-row"><label for="office-volume">Sound volume <span class="setting-todo">TODO</span></label><input id="office-volume" type="range" min="0" max="100" value="0" disabled/><small>Office audio is not implemented. Videos are silent.</small></div>`);
+    const fov = document.getElementById('office-fov'), bob = document.getElementById('office-bob');
+    if (fov) fov.oninput = e => { settings.set('fov', Number(e.target.value)); document.getElementById('office-fov-value').textContent = `${settings.fov}°`; };
+    if (bob) bob.oninput = e => { settings.set('bobbing', Number(e.target.value) / 100); document.getElementById('office-bob-value').textContent = `${Math.round(settings.bobbing * 100)}%`; };
   }
   $('start').onclick = () => {
     if (game.complete) { game.reset(); coworkers.reset(); started = false; }

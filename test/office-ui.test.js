@@ -15,10 +15,11 @@ test('office input drives FOV, mug throwing/refill, chair sitting, and pause wit
     let scene, camera, openedSettings = 0;
     const renderer = { domElement: canvas, render(s, c) { scene = s; camera = c; } };
     const settings = new GameSettings(); settings.set('bobbing', 0);
-    const office = createOffice({ renderer, container: layer, notify() {}, settings, openSettings() { openedSettings++; }, random: () => 0 });
+    const office = createOffice({ renderer, container: layer, notify() {}, settings, openDialog() { openedSettings++; }, random: () => 0 });
     office.activate(); layer.querySelector('[data-office="start"]').click(); office.update(0.05, 0);
     settings.set('fov', 95); office.update(0.05, 0); assert.equal(camera.fov, 95);
     layer.querySelector('.office-settings').click(); assert.equal(openedSettings, 1);
+    layer.querySelector('[data-office="start"]').click();
     const held = scene.getObjectByName('held-nectar-mug'); assert.equal(held.visible, true);
     canvas.click(); office.update(0.05, 0); assert.equal(held.visible, false);
     assert.ok(scene.getObjectByName('thrown-nectar-mug-1'));

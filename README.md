@@ -17,7 +17,9 @@ The interface uses a minimal dark terminal theme: gameplay fills the page, the o
 
 ## Settings
 
-Open **Settings** to adjust first-person FoV (55–105°) and walking view bobbing (0–100%; 0 disables it). Reduced-motion devices default to no bobbing. Settings last for the current page session only. The volume slider is disabled and marked TODO; Worker Bee Sim has no audio.
+The centered navigation switches games. The top-right global **⚙** controls fullscreen, dark/light appearance, accent colors, and compact UI. The default is black and yellow; preferences last for the current page session.
+
+Worker Bee Sim has its own **⚙** inside the office HUD for first-person FoV (55–105°) and walking view bobbing (0–100%; 0 disables it). Reduced-motion devices default to no bobbing. Its volume slider is disabled and marked TODO; Worker Bee Sim has no audio.
 
 ## Worker Bee Sim
 

@@ -1,13 +1,12 @@
 import * as THREE from 'three';
 import { Game, RULES, FLOWERS } from './game.js';
 import { createOffice } from './office.js';
-import { GameSettings } from './settings.js';
 import './style.css';
 
 const hexIcon = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 2 12 7v14l-12 7-12-7V9Z" stroke="currentColor" stroke-width="2"/><path d="M11 10h10v3H11zm-2 6h14v3H9zm2 6h10v3H11Z" fill="currentColor"/></svg>';
 document.querySelector('#app').innerHTML = `
   <header class="masthead"><a class="brand" href="/">${hexIcon}<span>The CreatorHive... Hive</span></a>
-    <nav aria-label="Game modes"><button id="garden-tab" aria-pressed="true">Hive</button><button id="office-tab" aria-pressed="false">Worker Bee Sim</button><button id="settings-button">Settings</button></nav>
+    <nav aria-label="Game modes"><button id="garden-tab" aria-pressed="true">Hive</button><button id="office-tab" aria-pressed="false">Worker Bee Sim</button></nav><button id="settings-button" class="global-settings" aria-label="Global settings" title="Global settings">⚙</button>
   </header>
   <main>
       <section class="arena" aria-label="3D hive game">
@@ -32,7 +31,6 @@ document.querySelector('#app').innerHTML = `
 
 const $ = id => document.getElementById(id);
 const game = new Game();
-const settings = new GameSettings({ reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
 let player = null, started = false, paused = false, soundEnabled = false, audio;
 let mode = 'garden', office;
 const keys = new Set();
@@ -44,9 +42,15 @@ function openSettings() {
   keys.clear();
   if (mode === 'office') office?.pause();
   else if (started && !paused) togglePause();
-  showModal(`<p class="eyebrow">GAME SETTINGS</p><h2>Settings</h2><div class="settings-row"><label for="setting-fov">Field of view <output id="fov-value">${settings.fov}°</output></label><input id="setting-fov" type="range" min="55" max="105" step="1" value="${settings.fov}"/><small>First-person view in Worker Bee Sim.</small></div><div class="settings-row"><label for="setting-bob">View bobbing <output id="bob-value">${Math.round(settings.bobbing * 100)}%</output></label><input id="setting-bob" type="range" min="0" max="100" step="5" value="${Math.round(settings.bobbing * 100)}"/><small>Set to 0 to disable walking motion.</small></div><div class="settings-row"><label for="setting-volume">Sound volume <span class="setting-todo">TODO</span></label><input id="setting-volume" type="range" min="0" max="100" value="0" disabled/><small>Office audio is not implemented. Monitor videos are silent.</small></div>`);
-  $('setting-fov').oninput = e => { settings.set('fov', Number(e.target.value)); $('fov-value').textContent = `${settings.fov}°`; };
-  $('setting-bob').oninput = e => { settings.set('bobbing', Number(e.target.value) / 100); $('bob-value').textContent = `${Math.round(settings.bobbing * 100)}%`; };
+  showModal(`<p class="eyebrow">GLOBAL</p><h2>Display settings</h2><div class="settings-row"><button id="fullscreen-button" class="primary">⛶ ${document.fullscreenElement ? 'Exit' : 'Enter'} fullscreen</button></div><div class="settings-row"><label for="theme-choice">Appearance <select id="theme-choice"><option value="dark">Dark</option><option value="light">Light</option></select></label></div><div class="settings-row"><label for="accent-color">Accent color <input id="accent-color" type="color" value="${document.documentElement.style.getPropertyValue('--accent') || '#f1ce50'}"/></label><div class="palette-options">${[['#f1ce50','Honey'],['#a3e88b','Green'],['#74d9e6','Cyan'],['#ee9ab4','Pink']].map(([color,label]) => `<button data-accent="${color}" aria-label="${label} accent" title="${label}" style="background:${color}"></button>`).join('')}</div></div><div class="settings-row"><label for="compact-ui">Compact interface <input id="compact-ui" type="checkbox" ${document.body.classList.contains('compact-ui') ? 'checked' : ''}/></label></div>`);
+  $('fullscreen-button').disabled = !document.fullscreenEnabled;
+  $('fullscreen-button').onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); modal.close(); } catch { toast('Fullscreen unavailable in this browser.'); } };
+  $('compact-ui').onchange = e => document.body.classList.toggle('compact-ui', e.target.checked);
+  $('theme-choice').value = document.documentElement.dataset.theme || 'dark';
+  $('theme-choice').onchange = e => { document.documentElement.dataset.theme = e.target.value; };
+  const setAccent = color => { document.documentElement.style.setProperty('--accent', color); $('accent-color').value = color; };
+  $('accent-color').oninput = e => setAccent(e.target.value);
+  document.querySelectorAll('[data-accent]').forEach(button => { button.onclick = () => setAccent(button.dataset.accent); });
 }
 $('settings-button').onclick = openSettings;
 $('sound').onclick = () => { soundEnabled = !soundEnabled; if (soundEnabled) { audio ??= new AudioContext(); audio.resume(); } $('sound').innerHTML = `♪ <span>Sound ${soundEnabled ? 'on' : 'off'}</span>`; $('sound').setAttribute('aria-pressed', soundEnabled); $('sound').setAttribute('aria-label', soundEnabled ? 'Disable sound' : 'Enable sound'); };
@@ -210,7 +214,7 @@ function animate() {
   uiTime += dt; if (uiTime > 0.12) { updateUI(); uiTime = 0; }
 }
 const gardenUI = $('garden-ui');
-if (renderer) office = createOffice({ renderer, container: $('game-ui'), notify: toast, settings, openSettings });
+if (renderer) office = createOffice({ renderer, container: $('game-ui'), notify: toast, openDialog: showModal });
 const gardenControls = $('controls').innerHTML;
 function switchMode(next) {
   if (next === mode) return;
