@@ -1,6 +1,6 @@
 # The Hive
 
-A local, single-player 3D bee game for CreatorHive's livestream. Fly through a floating hexagonal garden, collect nectar from flowers, and return it to the golden hive. Six AI scouts contribute to a shared goal of 300 nectar in three minutes. Rounds restart automatically.
+A local, single-player 3D bee game for CreatorHive's livestream. Fly through a floating hexagonal garden with pastel blue, violet, coral, and teal terrain, bright flowers, and colorful AI scouts, collect nectar from flowers, and return it to the golden hive. Six AI scouts contribute to a shared goal of 300 nectar in three minutes. Rounds restart automatically.
 
 ## Run locally
 
