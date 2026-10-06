@@ -64,6 +64,30 @@ npm start
 
 `npm start` previews the production build at **http://127.0.0.1:4173**. Both servers bind to loopback by default. Nothing is deployed or published by these commands.
 
+## Cloudflare hosting
+
+The checked-in `wrangler.jsonc` serves the production `dist/` directory through Cloudflare Workers static assets. Wrangler is pinned in the development dependencies. No Worker script or Cloudflare Vite plugin is needed.
+
+For the Cloudflare Workers Git build, use these settings:
+
+| Setting | Value |
+| --- | --- |
+| Root directory | Repository root |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Worker name | `creatorhive-hive` |
+
+Keep the Worker name in the dashboard and config aligned. The explicit config prevents Wrangler from trying to automatically rewrite the Vite configuration during deployment. See [Cloudflare static assets documentation](https://developers.cloudflare.com/workers/static-assets/).
+
+To validate deployment packaging locally without publishing or logging in:
+
+```sh
+npm run build
+npm run check:deploy
+```
+
+Publishing is performed by Cloudflare's connected build after you push a commit. Local development and validation commands do not publish anything.
+
 ## Play
 
 | Control | Action |
@@ -84,7 +108,7 @@ Touch devices show directional and boost buttons; drag the garden to rotate the 
 - Art, fonts, and audio are local or procedural. No remote assets or runtime CDN requests.
 - This repository contains no CreatorHive user data or integration with its accounts, platform, or livestream service.
 - A local development/preview server necessarily handles browser connections. The game does not record connection addresses or add access logging.
-- This project is for local use. Public hosting, multiplayer, and livestream integrations are outside the current implementation.
+- The production build can be hosted as static files. Multiplayer and livestream integrations are internally planned only.
 
 The game uses Three.js and needs WebGL 2 / hardware acceleration. Its entry screen explains when graphics are unavailable.
 

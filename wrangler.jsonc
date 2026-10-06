@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "creatorhive-hive",
+  "compatibility_date": "2026-10-05",
+  "send_metrics": false,
+  "assets": {
+    "directory": "./dist"
+  }
+}

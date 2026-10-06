@@ -9,14 +9,16 @@
     "start": "vite preview --host 127.0.0.1",
     "test": "node --test",
     "check:media": "node tools/check-media.mjs",
-    "check:modules": "node tools/check-modules.mjs"
+    "check:modules": "node tools/check-modules.mjs",
+    "check:deploy": "wrangler deploy --dry-run"
   },
   "dependencies": {
     "three": "^0.180.0"
   },
   "devDependencies": {
     "happy-dom": "^20.14.5",
-    "vite": "^7.1.9"
+    "vite": "^7.1.9",
+    "wrangler": "4.147.0"
   },
   "engines": {
     "node": ">=22.12"
