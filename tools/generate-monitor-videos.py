@@ -12,8 +12,19 @@ W, H, FPS, SECONDS = 256, 144, 8, 6
 OUT = Path(__file__).resolve().parents[1] / 'public' / 'media'
 
 
+PALETTES = {
+    'pollen-flight': {'background': (89, 145, 180), 'grid': (99, 154, 185), 'flowers': [(221, 123, 148), (239, 202, 104), (205, 178, 223)]},
+    'waggle-dance': {'background': (120, 78, 42), 'grid': (139, 94, 51)},
+    'honey-loop': {'background': (77, 44, 29), 'grid': (91, 53, 32)},
+    'flower-clock': {'background': (179, 198, 214), 'grid': (174, 195, 207), 'flowers': [(199, 130, 154), (164, 143, 200), (244, 221, 172)]},
+    'nectar-run': {'background': (46, 66, 104), 'grid': (55, 78, 115)},
+    'hive-scan': {'background': (25, 42, 56), 'grid': (34, 55, 68)},
+}
+
+
 def frame(kind, t):
-    data = bytearray(bytes((18, 36, 29)) * W * H)
+    palette = PALETTES[kind]
+    data = bytearray(bytes(palette['background']) * W * H)
 
     def rect(x, y, w, h, color):
         left, top = max(0, int(x)), max(0, int(y))
@@ -32,28 +43,30 @@ def frame(kind, t):
 
     def bee(x, y, scale=1):
         flap = 4 + 5 * abs(math.sin(t * math.pi * 8))
-        ellipse(x - 4 * scale, y - 9 * scale, 7 * scale, flap * scale, (169, 205, 175))
-        ellipse(x + 4 * scale, y - 9 * scale, 7 * scale, flap * scale, (206, 225, 189))
+        ellipse(x - 4 * scale, y - 9 * scale, 7 * scale, flap * scale, (208, 232, 242))
+        ellipse(x + 4 * scale, y - 9 * scale, 7 * scale, flap * scale, (241, 241, 220))
         ellipse(x, y, 15 * scale, 9 * scale, (233, 193, 79))
-        rect(x - 7 * scale, y - 8 * scale, 4 * scale, 16 * scale, (38, 45, 30))
-        rect(x + 1 * scale, y - 8 * scale, 4 * scale, 16 * scale, (38, 45, 30))
-        ellipse(x + 12 * scale, y - scale, 5 * scale, 7 * scale, (44, 53, 33))
+        rect(x - 7 * scale, y - 8 * scale, 4 * scale, 16 * scale, (40, 39, 35))
+        rect(x + 1 * scale, y - 8 * scale, 4 * scale, 16 * scale, (40, 39, 35))
+        ellipse(x + 12 * scale, y - scale, 5 * scale, 7 * scale, (44, 44, 39))
         ellipse(x + 14 * scale, y - 3 * scale, 1.4 * scale, 1.4 * scale, (245, 241, 198))
 
     def flower(x, y, phase):
         rect(x - 1, y, 2, 30, (90, 136, 81))
+        petals = palette.get('flowers', [(226, 181, 101)])
+        color = petals[int(x // 30) % len(petals)]
         for i in range(6):
             a = math.pi * i / 3 + phase
-            ellipse(x + math.cos(a) * 7, y + math.sin(a) * 7, 5, 5, (186, 169, 92))
+            ellipse(x + math.cos(a) * 7, y + math.sin(a) * 7, 5, 5, color)
         ellipse(x, y, 4, 4, (248, 206, 89))
 
     for x in range(0, W, 16):
-        rect(x, 0, 1, H, (24, 45, 35))
+        rect(x, 0, 1, H, palette['grid'])
     for y in range(0, H, 16):
-        rect(0, y, W, 1, (24, 45, 35))
+        rect(0, y, W, 1, palette['grid'])
 
     if kind == 'pollen-flight':
-        rect(0, 119, W, 25, (43, 73, 47))
+        rect(0, 119, W, 25, (80, 125, 64))
         for i in range(7):
             flower(16 + i * 36, 108 + math.sin(i) * 6, t * .2)
         for i in range(3):
@@ -61,7 +74,7 @@ def frame(kind, t):
                 49 + math.cos(t * math.tau / SECONDS + i * 2) * 22, .8)
     elif kind == 'waggle-dance':
         for i in range(9):
-            ellipse(20 + i * 27, 120, 10, 4, (71, 94, 49))
+            ellipse(20 + i * 27, 120, 10, 4, (169, 118, 57))
         for i in range(3):
             a = t * math.tau / SECONDS + i * math.tau / 3
             bee(128 + math.sin(a) * 60, 72 + math.sin(a * 2) * 26, 1)
@@ -77,7 +90,7 @@ def frame(kind, t):
     elif kind == 'nectar-run':
         for i in range(5):
             x = 20 + i * 48
-            rect(x, 110, 26, 3, (112, 137, 72))
+            rect(x, 110, 26, 3, (148, 122, 92))
             ellipse(x + 13, 99, 10, 7, (202, 157, 54))
         for i in range(2):
             a = t * math.tau / SECONDS + i * math.pi
@@ -88,13 +101,13 @@ def frame(kind, t):
         for row in range(4):
             for col in range(7):
                 x, y = 14 + col * 38 + (row % 2) * 19, 20 + row * 32
-                ellipse(x, y, 17, 14, (109, 92, 42))
-                ellipse(x, y, 13, 10, (52, 64, 34))
+                ellipse(x, y, 17, 14, (86, 115, 120) if kind == 'hive-scan' else (186, 130, 43))
+                ellipse(x, y, 13, 10, (40, 66, 74) if kind == 'hive-scan' else (118, 75, 25))
                 fill = (math.sin(t * math.tau / SECONDS + col * .5 + row) + 1) / 2
                 ellipse(x, y + 3, 11 * fill, 7 * fill + .2, (218, 168, 54))
         bee(128 + math.sin(t * math.tau / SECONDS) * 80, 65, 1.1)
         if kind == 'hive-scan':
-            rect(t / SECONDS * W, 0, 3, H, (133, 196, 119))
+            rect(t / SECONDS * W, 0, 3, H, (107, 211, 219))
             bee(128 - math.sin(t * math.tau / SECONDS) * 80, 105, .65)
     return data
 

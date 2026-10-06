@@ -34,3 +34,5 @@ npm run check:media
 
 The generator uses only the Python standard library, pipes frames directly to
 FFmpeg, and does not keep large raw frames in the repository.
+
+The clips use scene-specific colors: blue-sky flower flights, warm amber dances and honey cells, pastel flower clocks, navy nectar runs, and cyan/slate hive scans. Bees keep honey-colored bodies and pale wings.

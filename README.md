@@ -48,7 +48,7 @@ Sound starts after clicking **▶**. The office **⚙** has a working volume sli
 
 ### Monitor videos
 
-Office monitors play randomized, original bee animation clips. They are CC0-dedicated procedural artwork generated in this repo, **silent**, **256×144**, **8 fps**, and **six seconds** each. All six together are about **147 KiB**. Six screens use different clips and randomized starting timestamps, reuse six tiny video decoders, and pause their videos when the office is paused, hidden, or inactive.
+Office monitors play randomized, original bee animation clips. They are CC0-dedicated procedural artwork generated in this repo, **silent**, **256×144**, **8 fps**, and **six seconds** each. All six together are about **131 KiB**. Six screens use different clips and randomized starting timestamps, reuse six tiny video decoders, and pause their videos when the office is paused, hidden, or inactive.
 
 **Keep video assets small: at most 256 KiB per clip and 768 KiB total. Do not add big files or Git LFS.** Source, rights, and regeneration instructions are in [public/media/README.md](public/media/README.md). `npm run check:media` uses FFprobe to verify sizes, codecs, and the absence of audio tracks. Ordinary `npm test` needs only Node.js.
 
