@@ -33,6 +33,10 @@ A first-person office game with stickman bee coworkers, honeycomb archives, poll
 
 Furniture and walls block movement. Switching modes releases the mouse, and returning to an active office shift shows a Resume button. Both games remain entirely local, without saved progress or multiplayer.
 
+### Coworkers
+
+Five stickman bee coworkers alternate between typing at their computers, standing up, walking around desks, nectar breaks, and idle conversation. Their joints animate for walking, sitting, typing, sipping, and gestures. Nearby thrown-mug impacts make them react briefly before returning to their routine. They route around furniture, avoid other bees, and reserve chairs while seated; returning workers wait if you took their chair. The pollen-report chair is always available for the player. NPC activity pauses with the office.
+
 ### Monitor videos
 
 Office monitors play randomized, original bee animation clips. They are CC0-dedicated procedural artwork generated in this repo, **silent**, **256×144**, **8 fps**, and **six seconds** each. All three together are about **78 KiB**. Six screens share three video decoders and pause their videos when the office is paused, hidden, or inactive.

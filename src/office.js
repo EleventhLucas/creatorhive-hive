@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { OfficeGame, DESKS, STATIONS } from './office-game.js';
 import { GameSettings, viewBob } from './settings.js';
 import { createMonitorMedia } from './monitor-media.js';
+import { OfficeCoworkers } from './office-npcs.js';
 
-export function createOffice({ renderer, container, notify, settings = new GameSettings(), openSettings = () => {} }) {
+export function createOffice({ renderer, container, notify, settings = new GameSettings(), openSettings = () => {}, random = Math.random }) {
   const game = new OfficeGame();
+  const coworkers = new OfficeCoworkers(game, { random });
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#13231c');
   scene.fog = new THREE.Fog('#13231c', 22, 48);
   const camera = new THREE.PerspectiveCamera(75, 1, 0.08, 70); camera.rotation.order = 'YXZ'; scene.add(camera);
@@ -55,7 +57,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
     box(3.3, 0.75, 0.09, '#547052', d.x, 1.35, d.z - 0.59);
     shape(new THREE.CylinderGeometry(0.1, 0.08, 0.2, 12), '#e1bd54', d.x + 0.9, 1.14, d.z + 0.2);
   }
-  const monitorMedia = createMonitorMedia(monitors);
+  const monitorMedia = createMonitorMedia(monitors, { random });
   box(2.8, 1.05, 1.1, '#607b60', 9.5, 0.53, -8);
   box(1.2, 0.5, 0.7, '#c2c4a0', 9.5, 1.32, -8);
   box(0.85, 0.06, 0.4, '#ece4b1', 9.5, 1.59, -7.8);
@@ -73,21 +75,29 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   });
   function stickBee(x, z, yaw = 0) {
     const bee = new THREE.Group(); bee.position.set(x, 0, z); bee.rotation.y = yaw; scene.add(bee);
-    ball(0.25, '#e9c45f', 0, 1.75, 0, bee);
+    const body = new THREE.Group(); bee.add(body);
+    const arms = [], forearms = [], thighs = [], calves = [], hands = [], wings = [];
+    ball(0.25, '#e9c45f', 0, 1.75, 0, body);
     for (const side of [-1, 1]) {
-      ball(0.035, '#17251b', side * 0.08, 1.79, 0.23, bee);
-      rod([side * 0.11, 1.94, 0], [side * 0.21, 2.18, 0], 0.018, '#1c2c21', bee); ball(0.045, '#e8c568', side * 0.21, 2.18, 0, bee);
-      rod([side * 0.05, 0.9, 0], [side * 0.17, 0.1, 0], 0.045, '#17241b', bee);
-      rod([0, 1.42, 0], [side * 0.4, 1.1, 0.08], 0.035, '#17241b', bee);
-      rod([side * 0.4, 1.1, 0.08], [side * 0.32, 0.9, 0.22], 0.035, '#17241b', bee);
-      const wing = ball(0.3, '#bbd2b8', side * 0.22, 1.3, -0.17, bee); wing.scale.set(0.65, 1, 0.12);
+      ball(0.035, '#17251b', side * 0.08, 1.79, 0.23, body);
+      rod([side * 0.11, 1.94, 0], [side * 0.21, 2.18, 0], 0.018, '#1c2c21', body); ball(0.045, '#e8c568', side * 0.21, 2.18, 0, body);
+      const thigh = new THREE.Group(); thigh.position.set(side * 0.05, 0.9, 0); body.add(thigh); thighs.push(thigh);
+      rod([0, 0, 0], [side * 0.1, -0.4, 0], 0.045, '#17241b', thigh);
+      const calf = new THREE.Group(); calf.position.set(side * 0.1, -0.4, 0); thigh.add(calf); calves.push(calf);
+      rod([0, 0, 0], [side * 0.015, -0.4, 0.03], 0.045, '#17241b', calf);
+      const arm = new THREE.Group(); arm.position.set(side * 0.08, 1.42, 0); body.add(arm); arms.push(arm);
+      rod([0, 0, 0], [side * 0.26, -0.3, 0.02], 0.035, '#17241b', arm);
+      const forearm = new THREE.Group(); forearm.position.set(side * 0.26, -0.3, 0.02); arm.add(forearm); forearms.push(forearm);
+      rod([0, 0, 0], [-side * 0.08, -0.24, 0.08], 0.035, '#17241b', forearm);
+      const hand = new THREE.Group(); hand.position.set(-side * 0.08, -0.24, 0.08); forearm.add(hand); ball(0.05, '#e9c45f', 0, 0, 0, hand); hands.push(hand);
+      const wing = ball(0.3, '#bbd2b8', side * 0.22, 1.3, -0.17, body); wing.scale.set(0.65, 1, 0.12); wings.push(wing);
     }
-    rod([0, 0.9, 0], [0, 1.51, 0], 0.055, '#17241b', bee);
-    const abdomen = ball(0.23, '#e9c45f', 0, 1.03, -0.02, bee); abdomen.scale.set(0.8, 1.35, 0.8);
-    for (const y of [0.92, 1.09]) shape(new THREE.CylinderGeometry(0.18, 0.18, 0.07, 12), '#263328', 0, y, -0.02, bee);
-    return bee;
+    rod([0, 0.9, 0], [0, 1.51, 0], 0.055, '#17241b', body);
+    const abdomen = ball(0.23, '#e9c45f', 0, 1.03, -0.02, body); abdomen.scale.set(0.8, 1.35, 0.8);
+    for (const y of [0.92, 1.09]) shape(new THREE.CylinderGeometry(0.18, 0.18, 0.07, 12), '#263328', 0, y, -0.02, body);
+    return { root: bee, body, arms, forearms, thighs, calves, hands, wings };
   }
-  const colleagues = [stickBee(-3.5, -3.6, Math.PI), stickBee(3.5, -3.6, Math.PI), stickBee(-3.5, 1.4, Math.PI), stickBee(6, 2), stickBee(-6, 6, 0.9)];
+  const colleagues = coworkers.workers.map(worker => { const model = stickBee(worker.x, worker.z, worker.yaw); model.root.name = `worker-bee-${worker.id}`; return model; });
   for (const x of [-11.5, 11.5]) {
     shape(new THREE.CylinderGeometry(0.3, 0.2, 0.5, 6), '#bca164', x, 0.25, 1.8);
     rod([x, 0.4, 1.8], [x, 1.5, 1.8], 0.04, '#80a36e', scene);
@@ -100,18 +110,21 @@ export function createOffice({ renderer, container, notify, settings = new GameS
   shape(new THREE.CylinderGeometry(0.09, 0.07, 0.16, 12), '#dfbc5a', 0, 0, 0, mugTemplate);
   shape(new THREE.CylinderGeometry(0.077, 0.077, 0.012, 12), '#955823', 0, 0.085, 0, mugTemplate);
   const handle = shape(new THREE.TorusGeometry(0.055, 0.012, 6, 16), '#dfbc5a', 0.1, 0, 0, mugTemplate); handle.rotation.y = Math.PI / 2;
-  const heldMug = mugTemplate.clone(true); heldMug.position.set(0.27, -0.32, -0.7); camera.add(heldMug);
+  const heldMug = mugTemplate.clone(true); heldMug.name = 'held-nectar-mug'; heldMug.position.set(0.27, -0.32, -0.7); camera.add(heldMug);
+  for (const model of colleagues) { model.mug = mugTemplate.clone(true); model.hands[1].add(model.mug); }
   const thrownMugs = new Map();
 
   const root = document.createElement('div'); root.className = 'office-ui'; root.hidden = true;
   root.innerHTML = `<div class="office-top"><div class="world-title"><span class="live-dot"></span> WORKER BEE SIM<small>SHIFT <span data-office="shift">01</span></small></div><div class="office-objective"><span data-office="task">Approve pollen reports</span><small data-office="count">0 / 4 tasks</small></div><button class="office-pause" data-office="pause" aria-label="Pause office simulation" disabled>Ⅱ</button></div><div class="crosshair" aria-hidden="true">+</div><div class="office-interact" data-office="interact" hidden><span data-office="prompt"></span><div class="progress-track"><i data-office="progress"></i></div></div><div class="intro" data-office="intro"><div><h1>Welcome to the worker hive.</h1><p>Walk the office. Finish your shift. Take a nectar break.</p></div><button class="primary" data-office="start">Clock in <span>↗</span></button></div><div class="office-touch"><div class="dpad"><button data-office-key="KeyW" aria-label="Walk forward">↑</button><button data-office-key="KeyA" aria-label="Walk left">←</button><button data-office-key="KeyS" aria-label="Walk backward">↓</button><button data-office-key="KeyD" aria-label="Walk right">→</button></div><div><button data-office-key="KeyE">Work</button></div></div></div>`;
   const $ = name => root.querySelector(`[data-office="${name}"]`);
+  const settingsButton = document.createElement('button'); settingsButton.className = 'office-settings'; settingsButton.textContent = '⚙'; settingsButton.setAttribute('aria-label', 'Game settings'); settingsButton.title = 'Game settings'; settingsButton.onclick = openSettings;
+  root.querySelector('.office-top').insertBefore(settingsButton, $('pause'));
   const seatHint = document.createElement('small'); seatHint.className = 'seat-hint'; $('interact').appendChild(seatHint);
   const mugStatus = document.createElement('div'); mugStatus.className = 'office-mug'; root.appendChild(mugStatus);
   const throwButton = document.createElement('button'); throwButton.textContent = 'Throw'; throwButton.className = 'touch-throw'; root.querySelector('.office-touch > div:last-child').appendChild(throwButton);
   const seatButton = document.createElement('button'); seatButton.textContent = 'Sit'; seatButton.className = 'touch-seat'; root.querySelector('.office-touch > div:last-child').appendChild(seatButton);
   const keys = new Set(); let active = false, started = false, paused = false, lastTouch = null;
-  let walkDistance = 0, bobHeight = 0, bobRoll = 0;
+  let walkDistance = 0, bobHeight = 0, bobRoll = 0, npcTime = 0;
   const canvas = renderer.domElement;
   function renderIntro(title, description, button) { $('intro').hidden = false; $('intro').querySelector('h1').textContent = title; $('intro').querySelector('p').textContent = description; $('start').firstChild.textContent = button + ' '; }
   function unlock() { if (document.pointerLockElement === canvas) document.exitPointerLock(); }
@@ -121,7 +134,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
     if (paused) { monitorMedia.pause(); unlock(); renderIntro('Shift paused.', 'Resume when you’re ready.', 'Resume'); } else { $('intro').hidden = true; monitorMedia.start(); captureMouse(); }
   }
   $('start').onclick = () => {
-    if (game.complete) { game.reset(); started = false; }
+    if (game.complete) { game.reset(); coworkers.reset(); started = false; }
     started = true; $('pause').disabled = false; setPaused(false);
   };
   $('pause').onclick = () => { if (started && !game.complete) setPaused(!paused); };
@@ -171,7 +184,7 @@ export function createOffice({ renderer, container, notify, settings = new GameS
     seatHint.textContent = game.seated !== null ? 'F — stand up' : game.nearbyChair ? (game.occupiedChairs.has(game.nearbyChair.id) ? 'Chair occupied' : 'F — sit at computer') : '';
     seatButton.textContent = game.seated !== null ? 'Stand' : 'Sit';
     for (const mug of game.projectiles) {
-      if (!thrownMugs.has(mug.id)) { const model = mugTemplate.clone(true); model.scale.setScalar(1.5); scene.add(model); thrownMugs.set(mug.id, model); }
+      if (!thrownMugs.has(mug.id)) { const model = mugTemplate.clone(true); model.name = `thrown-nectar-mug-${mug.id}`; model.scale.setScalar(1.5); scene.add(model); thrownMugs.set(mug.id, model); }
       const model = thrownMugs.get(mug.id); model.position.set(mug.x, mug.y, mug.z); model.rotation.set(mug.age * 9, mug.age * 4, mug.age * 2);
     }
     const liveMugs = new Set(game.projectiles.map(mug => mug.id));
@@ -184,7 +197,28 @@ export function createOffice({ renderer, container, notify, settings = new GameS
       $('progress').style.width = `${game.progress / 1.5 * 100}%`;
     }
     stationMarkers.forEach((m, i) => { const current = i === game.task; m.ring.visible = current; m.label.material.opacity = current ? 1 : 0.55; m.label.material.transparent = true; m.label.rotation.y = Math.atan2(game.x - m.label.position.x, game.z - m.label.position.z); });
-    colleagues.forEach((b, i) => { b.rotation.z = Math.sin(time * 1.3 + i) * 0.025; });
+    if (!paused && !game.complete) { coworkers.tick(dt, started ? game.impacts : []); npcTime += dt; }
+    coworkers.workers.forEach((worker, i) => {
+      const model = colleagues[i], sitting = coworkers.isSeated(worker), walking = worker.state === 'walking';
+      const gait = Math.sin(worker.walkDistance * 8), idle = Math.sin(npcTime * 1.4 + i);
+      model.root.position.set(worker.x, 0, worker.z);
+      const turn = Math.atan2(Math.sin(worker.yaw - model.root.rotation.y), Math.cos(worker.yaw - model.root.rotation.y)); model.root.rotation.y += turn * Math.min(1, dt * 8);
+      const height = sitting ? -0.25 : walking ? Math.abs(gait) * 0.025 : idle * 0.01;
+      model.body.position.y += (height - model.body.position.y) * Math.min(1, dt * 12);
+      model.body.rotation.z = worker.state === 'chatting' ? idle * 0.04 : 0;
+      for (let side = 0; side < 2; side++) {
+        const sign = side ? 1 : -1;
+        model.thighs[side].rotation.x = sitting ? -Math.PI / 2 : walking ? gait * sign * 0.45 : 0;
+        model.calves[side].rotation.x = sitting ? Math.PI / 2 : walking ? Math.max(0, gait * sign) * 0.35 : 0;
+        model.arms[side].rotation.x = walking ? -gait * sign * 0.35 : sitting ? -1 + Math.sin(npcTime * 9 + side * 2) * 0.06 : idle * 0.025;
+        model.forearms[side].rotation.x = sitting ? -1 : 0;
+        if (worker.state === 'drinking' && side === 1) { model.arms[side].rotation.x = -2.2 + idle * 0.12; model.forearms[side].rotation.x = -0.7; }
+        if (worker.state === 'chatting' && side === 0) { model.arms[side].rotation.x = -0.9 + idle * 0.2; model.forearms[side].rotation.x = -0.4; }
+        if (worker.state === 'reacting') { model.arms[side].rotation.x = -1.9; model.forearms[side].rotation.x = -0.8; }
+        model.wings[side].rotation.y = sign * (0.1 + idle * 0.04);
+      }
+      model.mug.visible = worker.state === 'drinking';
+    });
     renderer.render(scene, camera);
   }
   return {

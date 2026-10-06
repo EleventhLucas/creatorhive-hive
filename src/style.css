@@ -142,6 +142,7 @@ dialog p { font-size: 11px; line-height: 1.9; color: var(--muted); }
 .office-objective { margin-left: auto; text-align: right; font-size: 11px; color: #d5e4bd; }
 .office-objective small { display: block; margin-top: 6px; color: var(--muted); font-size: 9px; }
 .office-pause { width: 34px; height: 32px; border: 1px solid #3d5345; border-radius: 3px; background: #101d16; }
+.office-settings { width: 34px; height: 32px; border: 1px solid #3d5345; border-radius: 3px; background: #101d16; font-size: 16px; }
 .crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #e5efc6; opacity: .8; font-size: 20px; font-weight: 400; text-shadow: 0 1px 3px #000; }
 .office-ui:has(.intro:not([hidden])) .crosshair { display: none; }
 .office-interact { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); background: #0b1512ed; border: 1px solid #5c7951; padding: 13px 18px; text-align: center; font-size: 11px; color: #d1e6b9; width: max-content; max-width: 90%; border-radius: 3px; }
@@ -157,8 +158,10 @@ dialog p { font-size: 11px; line-height: 1.9; color: var(--muted); }
   .masthead nav { width: 100%; justify-content: space-between; gap: 12px; }
   .masthead button { font-size: 10px; padding: 5px 0; }
   .arena { height: clamp(430px,calc(100dvh - 200px),850px); }
-  .office-top { padding: 14px 12px; gap: 12px; }
-  .office-objective { max-width: 150px; font-size: 9px; line-height: 1.5; }
+  .office-top { padding: 14px 12px; gap: 10px; display: grid; grid-template-columns: minmax(0,1fr) auto auto; }
+  .office-objective { grid-column: 1 / -1; grid-row: 2; margin-left: 0; text-align: left; font-size: 9px; line-height: 1.5; }
+  .office-settings { grid-column: 2; grid-row: 1; }
+  .office-pause { grid-column: 3; grid-row: 1; }
   .office-top .world-title { font-size: 8px; }
   .office-interact { font-size: 9px; bottom: 16px; }
 }

@@ -23,7 +23,7 @@ export class OfficeGame {
   reset() {
     this.shift++; this.x = 0; this.z = 8; this.yaw = 0; this.pitch = 0;
     this.task = 0; this.progress = 0; this.elapsed = 0; this.complete = false;
-    this.seated = null; this.standPoint = null; this.occupiedChairs = new Set();
+    this.seated = null; this.standPoint = null; this.occupiedChairs = new Set(); this.workerPositions = [];
     this.mugCooldown = 0; this.projectiles = []; this.nextMug = 0; this.impacts = [];
   }
   get station() { return STATIONS[this.task] ?? null; }
@@ -37,7 +37,7 @@ export class OfficeGame {
     if (this.complete) return false;
     if (this.seated !== null) {
       const candidates = [this.standPoint, ...[0, Math.PI / 2, Math.PI, -Math.PI / 2].map(a => ({ x: this.x + Math.cos(a) * 1.2, z: this.z + Math.sin(a) * 1.2 }))];
-      const point = candidates.find(p => p && this.canStand(p.x, p.z));
+      const point = candidates.find(p => p && this.canPlayerStand(p.x, p.z));
       if (!point) return false;
       this.x = point.x; this.z = point.z; this.seated = null; this.standPoint = null; return true;
     }
@@ -77,6 +77,7 @@ export class OfficeGame {
     return Math.abs(x) <= OFFICE_BOUNDS.x && Math.abs(z) <= OFFICE_BOUNDS.z && !OBSTACLES.some(o =>
       Math.abs(x - o.x) < o.halfX + radius && Math.abs(z - o.z) < o.halfZ + radius);
   }
+  canPlayerStand(x, z) { return this.canStand(x, z) && !this.workerPositions.some(w => Math.hypot(w.x - x, w.z - z) < 0.55); }
   look(dx, dy) { this.yaw -= dx * 0.002; this.pitch = Math.max(-1.2, Math.min(1.2, this.pitch - dy * 0.002)); }
   tick(dt, { forward = 0, right = 0, sprint = false, work = false } = {}) {
     dt = Math.max(0, Math.min(dt, 0.05));
@@ -88,8 +89,8 @@ export class OfficeGame {
     const dx = (right * Math.cos(this.yaw) - forward * Math.sin(this.yaw)) * speed;
     const dz = (-forward * Math.cos(this.yaw) - right * Math.sin(this.yaw)) * speed;
     if (this.seated === null) {
-      if (this.canStand(this.x + dx, this.z)) this.x += dx;
-      if (this.canStand(this.x, this.z + dz)) this.z += dz;
+      if (this.canPlayerStand(this.x + dx, this.z)) this.x += dx;
+      if (this.canPlayerStand(this.x, this.z + dz)) this.z += dz;
     }
     if (work && this.nearStation) {
       this.progress += dt;
