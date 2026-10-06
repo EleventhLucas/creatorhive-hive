@@ -68,6 +68,22 @@ def frame(kind, t):
         for i in range(8):
             a = i * math.tau / 8 + t * .3
             ellipse(128 + math.cos(a) * 92, 72 + math.sin(a) * 55, 2, 2, (213, 180, 90))
+    elif kind == 'flower-clock':
+        for i in range(10):
+            a = i * math.tau / 10
+            flower(128 + math.cos(a) * 75, 65 + math.sin(a) * 35, a + t * .1)
+        a = t * math.tau / SECONDS
+        bee(128 + math.cos(a) * 47, 65 + math.sin(a) * 23, 1.1)
+    elif kind == 'nectar-run':
+        for i in range(5):
+            x = 20 + i * 48
+            rect(x, 110, 26, 3, (112, 137, 72))
+            ellipse(x + 13, 99, 10, 7, (202, 157, 54))
+        for i in range(2):
+            a = t * math.tau / SECONDS + i * math.pi
+            x, y = 128 + math.cos(a) * 88, 58 + math.sin(a * 2) * 22
+            bee(x, y, .9)
+            ellipse(x - 8, y + 10, 4, 4, (244, 205, 87))
     else:
         for row in range(4):
             for col in range(7):
@@ -77,12 +93,15 @@ def frame(kind, t):
                 fill = (math.sin(t * math.tau / SECONDS + col * .5 + row) + 1) / 2
                 ellipse(x, y + 3, 11 * fill, 7 * fill + .2, (218, 168, 54))
         bee(128 + math.sin(t * math.tau / SECONDS) * 80, 65, 1.1)
+        if kind == 'hive-scan':
+            rect(t / SECONDS * W, 0, 3, H, (133, 196, 119))
+            bee(128 - math.sin(t * math.tau / SECONDS) * 80, 105, .65)
     return data
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for kind in ['pollen-flight', 'waggle-dance', 'honey-loop']:
+    for kind in ['pollen-flight', 'waggle-dance', 'honey-loop', 'flower-clock', 'nectar-run', 'hive-scan']:
         output = OUT / f'{kind}.mp4'
         command = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y',
                    '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}',

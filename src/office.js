@@ -145,7 +145,7 @@ export function createOffice({ renderer, container, notify, settings, openDialog
     if (bob) bob.oninput = e => { settings.set('bobbing', Number(e.target.value) / 100); document.getElementById('office-bob-value').textContent = `${Math.round(settings.bobbing * 100)}%`; };
   }
   $('start').onclick = () => {
-    if (game.complete) { game.reset(); coworkers.reset(); started = false; }
+    if (game.complete) { game.reset(); coworkers.reset(); monitorMedia.shuffle(); started = false; }
     started = true; $('pause').disabled = false; setPaused(false);
   };
   $('pause').onclick = () => { if (started && !game.complete) setPaused(!paused); };
